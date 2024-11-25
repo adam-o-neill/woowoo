@@ -23,7 +23,7 @@ async function downloadEphemeris() {
 
     console.log("Extracting required files...");
     execSync(
-      `unzip -j swisseph.zip ${REQUIRED_FILES.map(
+      `unzip -j -o swisseph.zip ${REQUIRED_FILES.map(
         (f) => `swisseph-master/ephe/${f}`
       ).join(" ")} -d ${ephePath}`
     );
