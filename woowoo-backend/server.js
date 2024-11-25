@@ -193,6 +193,7 @@ const limiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: false, // Count successful requests against the rate limit
+  trustProxy: true,
 });
 app.use(limiter);
 

@@ -7,7 +7,7 @@ export default function Layout() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="forecast" />
+      <Stack.Screen name="index" />
     </Stack>
   );
 }

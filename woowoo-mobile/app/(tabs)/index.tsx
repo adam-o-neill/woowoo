@@ -15,6 +15,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import ClearCacheButton from "@/components/ClearCacheButton";
 import PlanetaryPositions from "@/components/PlanetaryPositions";
 import MoonPhase from "@/components/MoonPhase";
+import getEnvVars from "@/config/env";
+const { apiUrl } = getEnvVars();
 
 interface Forecast {
   date: string;
@@ -51,7 +53,7 @@ const AstrologicalForecastScreen = () => {
     try {
       const today = new Date().toISOString().split("T")[0];
       const response = await fetch(
-        `http://localhost:3000/astrological-forecast-by-date?date=${today}`
+        `${apiUrl}/astrological-forecast-by-date?date=${today}`
       );
       const data = await response.json();
       setCurrentPositions(data.planets);
@@ -96,7 +98,7 @@ const AstrologicalForecastScreen = () => {
       // Fetch forecasts for missing dates
       for (const date of missingDates) {
         const response = await fetch(
-          `http://localhost:3000/astrological-forecast-by-date?date=${date}`
+          `${apiUrl}/astrological-forecast-by-date?date=${date}`
         );
         const forecast = await response.json();
 
