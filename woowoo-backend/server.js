@@ -199,12 +199,21 @@ app.use(limiter);
 
 // Add API key authentication
 const authenticateApiKey = (req, res, next) => {
-  const apiKey = req.headers["x-api-key"];
+  const apiKey = req.headers["x-api-key"] || req.query.apiKey;
+
   if (!apiKey || apiKey !== process.env.API_KEY) {
     return res.status(401).json({ error: "Unauthorized" });
   }
+
   next();
 };
+
+// Apply to all routes except health check
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok", environment: process.env.NODE_ENV });
+});
+
+// Apply authentication to other routes
 app.use(authenticateApiKey);
 
 app.use(express.json({ limit: "10kb" }));

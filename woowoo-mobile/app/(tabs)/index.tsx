@@ -6,17 +6,13 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  ScrollView,
 } from "react-native";
-import Markdown from "react-native-markdown-display";
-import { LinearGradient } from "expo-linear-gradient";
 import Animated, { Layout } from "react-native-reanimated";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ClearCacheButton from "@/components/ClearCacheButton";
 import PlanetaryPositions from "@/components/PlanetaryPositions";
 import MoonPhase from "@/components/MoonPhase";
 import getEnvVars from "@/config/env";
-const { apiUrl } = getEnvVars();
 
 interface Forecast {
   date: string;
@@ -52,8 +48,16 @@ const AstrologicalForecastScreen = () => {
   const fetchCurrentPositions = async () => {
     try {
       const today = new Date().toISOString().split("T")[0];
+      const { apiUrl, apiKey } = getEnvVars();
+
       const response = await fetch(
-        `${apiUrl}/astrological-forecast-by-date?date=${today}`
+        `${apiUrl}/astrological-forecast-by-date?date=${today}`,
+        {
+          headers: {
+            "x-api-key": apiKey || "",
+            "Content-Type": "application/json",
+          },
+        }
       );
       const data = await response.json();
       setCurrentPositions(data.planets);
@@ -95,10 +99,17 @@ const AstrologicalForecastScreen = () => {
         }
       }
 
+      const { apiUrl, apiKey } = getEnvVars();
       // Fetch forecasts for missing dates
       for (const date of missingDates) {
         const response = await fetch(
-          `${apiUrl}/astrological-forecast-by-date?date=${date}`
+          `${apiUrl}/astrological-forecast-by-date?date=${date}`,
+          {
+            headers: {
+              "x-api-key": apiKey || "",
+              "Content-Type": "application/json",
+            },
+          }
         );
         const forecast = await response.json();
 
