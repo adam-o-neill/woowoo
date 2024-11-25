@@ -152,17 +152,47 @@ const getAstrologicalEvents = (planetData, date) => {
 };
 
 // Add necessary security middleware
-app.use(helmet()); // Basic security headers
 app.use(
-  cors({
-    origin: process.env.ALLOWED_ORIGINS?.split(",") || "*",
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'"],
+        imgSrc: ["'self'"],
+      },
+    },
+    crossOriginEmbedderPolicy: true,
+    crossOriginOpenerPolicy: true,
+    crossOriginResourcePolicy: { policy: "same-site" },
+    dnsPrefetchControl: true,
+    frameguard: { action: "deny" },
+    hidePoweredBy: true,
+    hsts: true,
+    ieNoOpen: true,
+    noSniff: true,
+    referrerPolicy: { policy: "no-referrer" },
+    xssFilter: true,
   })
 );
+
+const corsOptions = {
+  origin: process.env.ALLOWED_ORIGINS?.split(",") || "*",
+  methods: ["GET"], // Only allow GET methods
+  allowedHeaders: ["Content-Type", "x-api-key"],
+  maxAge: 86400, // Cache preflight for 24 hours
+};
+
+app.use(cors(corsOptions));
 
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
+  message: "Too many requests from this IP, please try again later.",
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: false, // Count successful requests against the rate limit
 });
 app.use(limiter);
 
@@ -176,55 +206,92 @@ const authenticateApiKey = (req, res, next) => {
 };
 app.use(authenticateApiKey);
 
-app.get("/astrological-forecast-by-date", async (req, res) => {
+app.use(express.json({ limit: "10kb" }));
+app.use(express.urlencoded({ extended: true, limit: "10kb" }));
+
+const validateDateParam = (req, res, next) => {
   const { date } = req.query;
 
   if (!date) {
-    return res.status(400).json({ error: "Date query parameter is required." });
+    return res.status(400).json({ error: "Date parameter is required" });
   }
 
-  try {
-    const jsDate = new Date(date);
-    const hour =
-      jsDate.getHours() + jsDate.getMinutes() / 60 + jsDate.getSeconds() / 3600;
-    const jd = swe.julday(
-      jsDate.getFullYear(),
-      jsDate.getMonth() + 1,
-      jsDate.getDate(),
-      hour,
-      swe.constants.SE_GREG_CAL
-    );
+  const parsedDate = new Date(date);
+  if (isNaN(parsedDate.getTime())) {
+    return res.status(400).json({ error: "Invalid date format" });
+  }
 
-    const iflag = swe.constants.SEFLG_SWIEPH;
+  // Optional: Limit date range
+  const minDate = new Date();
+  minDate.setFullYear(minDate.getFullYear() - 1);
+  const maxDate = new Date();
+  maxDate.setFullYear(maxDate.getFullYear() + 1);
 
-    // Calculate positions using the shared planets array
-    const planetData = planets.map((planet) => {
-      const result = swe.calc_ut(jd, planet.id, iflag);
-      return {
-        name: planet.name,
-        longitude: result.data[0],
-        latitude: result.data[1],
-        distance: result.data[2],
-        zodiacSign: getZodiacSign(result.data[0]),
-      };
-    });
+  if (parsedDate < minDate || parsedDate > maxDate) {
+    return res
+      .status(400)
+      .json({ error: "Date must be within one year of current date" });
+  }
 
-    const moonPhase = getMoonPhase(jd);
-    const aspects = getSignificantAspects(planetData);
-    const events = getAstrologicalEvents(planetData, date);
+  next();
+};
 
-    // Call OpenAI with the updated prompts
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a brief astrologer. List only the significant changes that occur on this day. Maximum 3 lines.",
-        },
-        {
-          role: "user",
-          content: `Changes for ${date}:
+app.get(
+  "/astrological-forecast-by-date",
+  validateDateParam,
+  async (req, res) => {
+    const { date } = req.query;
+
+    if (!date) {
+      return res
+        .status(400)
+        .json({ error: "Date query parameter is required." });
+    }
+
+    try {
+      const jsDate = new Date(date);
+      const hour =
+        jsDate.getHours() +
+        jsDate.getMinutes() / 60 +
+        jsDate.getSeconds() / 3600;
+      const jd = swe.julday(
+        jsDate.getFullYear(),
+        jsDate.getMonth() + 1,
+        jsDate.getDate(),
+        hour,
+        swe.constants.SE_GREG_CAL
+      );
+
+      const iflag = swe.constants.SEFLG_SWIEPH;
+
+      // Calculate positions using the shared planets array
+      const planetData = planets.map((planet) => {
+        const result = swe.calc_ut(jd, planet.id, iflag);
+        return {
+          name: planet.name,
+          longitude: result.data[0],
+          latitude: result.data[1],
+          distance: result.data[2],
+          zodiacSign: getZodiacSign(result.data[0]),
+        };
+      });
+
+      const moonPhase = getMoonPhase(jd);
+      const aspects = getSignificantAspects(planetData);
+      const events = getAstrologicalEvents(planetData, date);
+
+      // Call OpenAI with the updated prompts
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a brief astrologer. List only the significant changes that occur on this day. Maximum 3 lines.",
+          },
+          {
+            role: "user",
+            content: `Changes for ${date}:
           ${events.map((event) => event.description).join("\n")}
           ${
             moonPhase.phaseName === "New Moon" ||
@@ -235,43 +302,44 @@ app.get("/astrological-forecast-by-date", async (req, res) => {
               : ""
           }
           ${aspects.length > 0 ? aspects.join("\n") : ""}`,
-        },
-      ],
-    });
+          },
+        ],
+      });
 
-    // Add emoji forecast
-    const emojiResponse = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content:
-            "Based on these astrological events, respond with exactly 5 relevant emojis.",
-        },
-        {
-          role: "user",
-          content: response.choices[0].message.content,
-        },
-      ],
-    });
+      // Add emoji forecast
+      const emojiResponse = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content:
+              "Based on these astrological events, respond with exactly 5 relevant emojis.",
+          },
+          {
+            role: "user",
+            content: response.choices[0].message.content,
+          },
+        ],
+      });
 
-    res.json({
-      date,
-      planets: planetData,
-      moonData: {
-        phase: moonPhase,
-        position: planetData.find((p) => p.name === "Moon"),
-      },
-      events,
-      aspects,
-      forecast: response.choices[0].message.content.trim(),
-      emojiForecast: emojiResponse.choices[0].message.content.trim(),
-    });
-  } catch (error) {
-    console.error("Error:", error.message);
-    res.status(500).json({ error: error.message });
+      res.json({
+        date,
+        planets: planetData,
+        moonData: {
+          phase: moonPhase,
+          position: planetData.find((p) => p.name === "Moon"),
+        },
+        events,
+        aspects,
+        forecast: response.choices[0].message.content.trim(),
+        emojiForecast: emojiResponse.choices[0].message.content.trim(),
+      });
+    } catch (error) {
+      console.error("Error:", error.message);
+      res.status(500).json({ error: error.message });
+    }
   }
-});
+);
 
 app.get("/astrological-forecast-10-days", async (req, res) => {
   try {
@@ -472,6 +540,20 @@ app.get("/astrological-forecast", async (req, res) => {
     console.error("Error:", error.message);
     res.status(500).json({ error: error.message });
   }
+});
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    error:
+      process.env.NODE_ENV === "production"
+        ? "Internal server error"
+        : err.message,
+  });
+});
+
+app.use((req, res) => {
+  res.status(404).json({ error: "Not found" });
 });
 
 app.listen(PORT, () => {
