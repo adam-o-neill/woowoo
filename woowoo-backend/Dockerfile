@@ -25,5 +25,5 @@ RUN node scripts/download-ephemeris.js
 # Copy the rest of the application
 COPY . .
 
-EXPOSE 3000
+EXPOSE 8080
 CMD ["node", "server.js"]
