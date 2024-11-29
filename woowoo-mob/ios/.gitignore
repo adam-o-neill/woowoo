@@ -27,4 +27,6 @@ project.xcworkspace
 *.jsbundle
 
 # CocoaPods
-/Pods/
+/Pods/*
+!Podfile
+!Podfile.lock
