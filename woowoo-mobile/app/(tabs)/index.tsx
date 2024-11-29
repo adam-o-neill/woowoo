@@ -49,6 +49,8 @@ const AstrologicalForecastScreen = () => {
     try {
       const today = new Date().toISOString().split("T")[0];
       const { apiUrl, apiKey } = getEnvVars();
+      console.log("Using API URL:", apiUrl);
+      console.log("Using API Key:", apiKey);
 
       const response = await fetch(
         `${apiUrl}/astrological-forecast-by-date?date=${today}`,
@@ -219,7 +221,7 @@ const AstrologicalForecastScreen = () => {
                 {moonData && <MoonPhase moonData={moonData} />}
               </>
             )}
-            {/* <ClearCacheButton onCacheCleared={reloadForecasts} /> */}
+            <ClearCacheButton onCacheCleared={reloadForecasts} />
 
             <View style={styles.subtitleContainer}>
               <Text style={styles.subtitleText}>Next 10 days</Text>

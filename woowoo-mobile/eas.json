@@ -1,0 +1,36 @@
+{
+  "cli": {
+    "version": ">= 9.0.6"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": true,
+        "buildConfiguration": "Debug"
+      },
+      "env": {
+        "NODE_ENV": "development",
+        "EXPO_PUBLIC_API_KEY": "$(API_KEY)",
+        "EXPO_PUBLIC_API_URL": "$(API_URL)"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_KEY": "$(API_KEY)",
+        "EXPO_PUBLIC_API_URL": "$(API_URL)"
+      }
+    },
+    "production": {
+      "env": {
+        "EXPO_PUBLIC_API_KEY": "$(API_KEY)",
+        "EXPO_PUBLIC_API_URL": "$(API_URL)"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

@@ -49,3 +49,22 @@ expo-env.d.ts
 # Ephemeris files
 **/ephemeris_files/
 ephemeris_files/
+
+# iOS build files
+*.ipa
+*.app
+*.dSYM.zip
+*.dSYM
+
+# Xcode build directories
+ios/build/
+DerivedData/
+
+# Expo/EAS build artifacts
+dist/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
