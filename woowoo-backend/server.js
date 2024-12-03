@@ -1,10 +1,11 @@
 require("dotenv").config();
 const express = require("express");
-const { Configuration, OpenAI } = require("openai");
+const { OpenAI } = require("openai");
 const swe = require("sweph");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
+const { authenticateUser } = require("./auth/supabase");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -246,6 +247,7 @@ const validateDateParam = (req, res, next) => {
   next();
 };
 
+// Public route - no auth needed
 app.get(
   "/astrological-forecast-by-date",
   validateDateParam,
@@ -548,6 +550,20 @@ app.get("/astrological-forecast", async (req, res) => {
     });
   } catch (error) {
     console.error("Error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Protected route - requires auth
+app.get("/user/favorites", authenticateUser, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("favorites")
+      .select("*")
+      .eq("user_id", req.user.id);
+
+    res.json(data);
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });

@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, View, StyleSheet } from "react-native";
+import { Text, View, StyleSheet, TouchableOpacity } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ClearCacheButton = ({
@@ -19,7 +19,9 @@ const ClearCacheButton = ({
 
   return (
     <View style={styles.buttonContainer}>
-      <Button title="Refresh" onPress={clearCache} color="#fff" />
+      <TouchableOpacity onPress={clearCache} style={styles.button}>
+        <Text style={styles.buttonText}>Refresh</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -28,6 +30,16 @@ const styles = StyleSheet.create({
   buttonContainer: {
     marginTop: 20,
     paddingHorizontal: 16,
+  },
+  button: {
+    backgroundColor: "#000",
+    fontFamily: "monospace",
+    marginHorizontal: "auto",
+  },
+  buttonText: {
+    color: "#fff",
+    fontFamily: "monospace",
+    marginHorizontal: "auto",
   },
 });
 
