@@ -1,5 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "react-native";
+import { TouchableOpacity, Text, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 
 export function SignOutButton() {
@@ -9,11 +9,26 @@ export function SignOutButton() {
   const handleSignOut = async () => {
     try {
       await signOut();
-      router.replace("/(auth)"); // Redirect to the auth screen
+      router.replace("/(auth)");
     } catch (error) {
       console.error("Error signing out:", error);
     }
   };
 
-  return <Button title="Sign Out" onPress={handleSignOut} />;
+  return (
+    <TouchableOpacity onPress={handleSignOut} style={styles.button}>
+      <Text style={styles.text}>Sign Out</Text>
+    </TouchableOpacity>
+  );
 }
+
+const styles = StyleSheet.create({
+  button: {
+    padding: 8,
+  },
+  text: {
+    color: "#fff",
+    fontFamily: "SpaceMono",
+    fontSize: 14,
+  },
+});

@@ -12,6 +12,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import ClearCacheButton from "@/components/ClearCacheButton";
 import PlanetaryPositions from "@/components/PlanetaryPositions";
 import MoonPhase from "@/components/MoonPhase";
+import { PersonalInsights } from "@/components/PersonalInsights";
+import { DailyDashboard } from "@/components/DailyDashboard";
 
 interface Forecast {
   date: string;
@@ -49,11 +51,9 @@ const AstrologicalForecastScreen = () => {
       const today = new Date().toISOString().split("T")[0];
       const apiUrl = process.env.EXPO_PUBLIC_API_URL;
       const apiKey = process.env.EXPO_PUBLIC_API_KEY;
-      console.log("Using API URL:", apiUrl);
-      console.log("Using API Key:", apiKey);
 
       const response = await fetch(
-        `${apiUrl}/astrological-forecast-by-date?date=${today}`,
+        `${apiUrl}/api/astrological-forecast-by-date?date=${today}`,
         {
           headers: {
             "x-api-key": apiKey || "",
@@ -80,7 +80,6 @@ const AstrologicalForecastScreen = () => {
 
     try {
       const cachedForecasts = await AsyncStorage.getItem("forecasts");
-      console.log("Cached forecasts:", cachedForecasts);
       const cachedData = cachedForecasts ? JSON.parse(cachedForecasts) : {};
       const today = new Date().toISOString().split("T")[0];
 
@@ -107,7 +106,7 @@ const AstrologicalForecastScreen = () => {
       // Fetch forecasts for missing dates
       for (const date of missingDates) {
         const response = await fetch(
-          `${apiUrl}/astrological-forecast-by-date?date=${date}`,
+          `${apiUrl}/api/astrological-forecast-by-date?date=${date}`,
           {
             headers: {
               "x-api-key": apiKey || "",
@@ -208,9 +207,8 @@ const AstrologicalForecastScreen = () => {
         style={styles.list}
         ListHeaderComponent={() => (
           <View style={styles.headerContainer}>
-            {/* <View style={styles.titleContainer}>
-              <Text style={styles.titleText}>woowoo</Text>
-            </View> */}
+            <DailyDashboard />
+            <PersonalInsights />
             {currentPositions && currentPositions.length > 0 && (
               <>
                 <View style={styles.subtitleContainer}>
@@ -236,9 +234,7 @@ const AstrologicalForecastScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  headerContainer: {
-    marginTop: 40,
-  },
+  headerContainer: {},
   container: {
     flex: 1,
     backgroundColor: "#000",

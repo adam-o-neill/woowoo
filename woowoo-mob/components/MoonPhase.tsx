@@ -61,7 +61,7 @@ const MoonPhase = ({ moonData }: MoonPhaseProps) => {
         <View style={styles.phaseInfo}>
           <Text style={styles.phaseName}>{moonData.phase.phaseName}</Text>
           <Text style={styles.phaseDetails}>
-            {moonData.phase.phase.toFixed(1)}% illuminated
+            {/* {moonData.phase.toFixed(1)}% illuminated */}
           </Text>
           <Text style={styles.phaseDetails}>
             Day {Math.floor(moonData.phase.age)} of cycle

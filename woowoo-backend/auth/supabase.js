@@ -7,6 +7,7 @@ const supabase = createClient(
 
 // Express middleware to verify Supabase JWT
 const authenticateUser = async (req, res, next) => {
+  console.log("Authenticating user");
   const token = req.headers.authorization?.replace("Bearer ", "");
 
   if (!token) {

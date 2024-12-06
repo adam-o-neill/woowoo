@@ -45,7 +45,6 @@ const CustomDarkTheme = {
 
 function AppNavigator() {
   const { session, isLoading } = useAuth();
-  console.log("session", session);
 
   if (isLoading) {
     return null;
