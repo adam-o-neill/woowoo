@@ -51,20 +51,30 @@ router.post("/birth-info", authenticateUser, async (req, res) => {
     // Delete existing birth info if it exists
     await db.delete(birthInfo).where(eq(birthInfo.userId, req.user.id));
 
-    // Insert new birth info
+    const [hours, minutes] = timeOfBirth.split(":").map(Number);
+
+    // Parse the birth date (assumes dateOfBirth is "YYYY-MM-DD")
+    const [year, month, day] = dateOfBirth.split("-").map(Number);
+
+    // Create a UTC date. This ensures no local timezone offset issues.
+    const birthDateUTC = new Date(
+      Date.UTC(year, month - 1, day, hours, minutes, 0)
+    );
+
+    // Store the birth date with the correct local time
     const [newBirthInfo] = await db
       .insert(birthInfo)
       .values({
         userId: req.user.id,
-        dateOfBirth: new Date(dateOfBirth),
+        dateOfBirth: birthDateUTC,
         timeOfBirth,
         placeOfBirth,
       })
       .returning();
 
-    // Calculate birth chart data
+    // Calculate birth chart data using the local time
     const chartData = await calculateBirthChart(
-      dateOfBirth,
+      birthDateUTC.toISOString(),
       timeOfBirth,
       placeOfBirth
     );

@@ -1,6 +1,5 @@
 const axios = require("axios");
 
-// Option 1: Using Google Maps Geocoding API
 const geocodeWithGoogle = async (placeOfBirth) => {
   try {
     const response = await axios.get(
@@ -31,7 +30,6 @@ const geocodeWithGoogle = async (placeOfBirth) => {
 
 // Wrapper function to use either service
 const geocode = async (placeOfBirth) => {
-  // Choose which service to use based on your needs
   if (process.env.GOOGLE_MAPS_API_KEY) {
     return geocodeWithGoogle(placeOfBirth);
   }

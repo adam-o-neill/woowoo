@@ -36,6 +36,8 @@ class APIClient {
     accessToken: string,
     options: RequestInit = {}
   ) {
+    console.log("fetching", endpoint);
+    console.log("options", options);
     return this.fetch(endpoint, {
       ...options,
       headers: {

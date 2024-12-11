@@ -4,13 +4,15 @@ import { View, Text, StyleSheet } from "react-native";
 interface MoonPhaseProps {
   moonData: {
     phase: {
-      phase: number;
-      age: number;
-      phaseName: string;
+      phase: number | null; // Updated to allow null
+      phaseName: string; // Changed from nested age property
     };
     position: {
+      name: string; // Added missing property
       zodiacSign: string;
       longitude: number;
+      latitude: number; // Added missing property
+      distance: number; // Added missing property
     };
   };
 }
@@ -30,27 +32,14 @@ const MoonPhase = ({ moonData }: MoonPhaseProps) => {
     return symbols[phaseName] || "🌑";
   };
 
-  const getNextPhase = (currentAge: number) => {
-    // Moon cycle is approximately 29.53 days
-    const daysUntilNew = 29.53 - currentAge;
-    const daysUntilFull = 14.765 - (currentAge % 14.765);
-
-    if (currentAge < 14.765) {
-      // We're heading towards Full Moon
-      return {
-        phase: "Full Moon",
-        days: Math.ceil(daysUntilFull),
-      };
-    } else {
-      // We're heading towards New Moon
-      return {
-        phase: "New Moon",
-        days: Math.ceil(daysUntilNew),
-      };
-    }
+  const getNextPhase = (currentPhase: number | null) => {
+    return {
+      phase: currentPhase && currentPhase < 0.5 ? "Full Moon" : "New Moon",
+      days: 7,
+    };
   };
 
-  const nextPhase = getNextPhase(moonData.phase.age);
+  const nextPhase = getNextPhase(moonData.phase.phase);
 
   return (
     <View style={styles.container}>
@@ -60,12 +49,11 @@ const MoonPhase = ({ moonData }: MoonPhaseProps) => {
         </Text>
         <View style={styles.phaseInfo}>
           <Text style={styles.phaseName}>{moonData.phase.phaseName}</Text>
-          <Text style={styles.phaseDetails}>
-            {/* {moonData.phase.toFixed(1)}% illuminated */}
-          </Text>
-          <Text style={styles.phaseDetails}>
-            Day {Math.floor(moonData.phase.age)} of cycle
-          </Text>
+          {moonData.phase.phase && (
+            <Text style={styles.phaseDetails}>
+              {(moonData.phase.phase * 100).toFixed(1)}% illuminated
+            </Text>
+          )}
         </View>
       </View>
       <Text style={styles.position}>
@@ -73,7 +61,7 @@ const MoonPhase = ({ moonData }: MoonPhaseProps) => {
         {moonData.position.longitude.toFixed(1)}°
       </Text>
       <Text style={styles.nextPhase}>
-        {nextPhase.phase} in {nextPhase.days} days
+        {nextPhase.phase} in approximately {nextPhase.days} days
       </Text>
     </View>
   );

@@ -6,7 +6,7 @@ PODS:
   - EXJSONUtils (0.14.0)
   - EXManifests (0.15.4):
     - ExpoModulesCore
-  - Expo (52.0.11):
+  - Expo (52.0.18):
     - ExpoModulesCore
   - expo-dev-client (5.0.4):
     - EXManifests
@@ -219,7 +219,9 @@ PODS:
     - ExpoModulesCore
   - ExpoBlur (14.0.1):
     - ExpoModulesCore
-  - ExpoFileSystem (18.0.4):
+  - ExpoClipboard (7.0.0):
+    - ExpoModulesCore
+  - ExpoFileSystem (18.0.5):
     - ExpoModulesCore
   - ExpoFont (13.0.1):
     - ExpoModulesCore
@@ -231,7 +233,7 @@ PODS:
     - ExpoModulesCore
   - ExpoLinking (7.0.3):
     - ExpoModulesCore
-  - ExpoModulesCore (2.0.6):
+  - ExpoModulesCore (2.1.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2093,6 +2095,7 @@ DEPENDENCIES:
   - expo-dev-menu-interface (from `../node_modules/expo-dev-menu-interface/ios`)
   - ExpoAsset (from `../node_modules/expo-asset/ios`)
   - ExpoBlur (from `../node_modules/expo-blur/ios`)
+  - ExpoClipboard (from `../node_modules/expo-clipboard/ios`)
   - ExpoFileSystem (from `../node_modules/expo-file-system/ios`)
   - ExpoFont (from `../node_modules/expo-font/ios`)
   - ExpoHaptics (from `../node_modules/expo-haptics/ios`)
@@ -2207,6 +2210,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-asset/ios"
   ExpoBlur:
     :path: "../node_modules/expo-blur/ios"
+  ExpoClipboard:
+    :path: "../node_modules/expo-clipboard/ios"
   ExpoFileSystem:
     :path: "../node_modules/expo-file-system/ios"
   ExpoFont:
@@ -2379,20 +2384,21 @@ SPEC CHECKSUMS:
   EXConstants: dd2fe64c6cdb1383b694c309a63028a8e9f2be6d
   EXJSONUtils: 01fc7492b66c234e395dcffdd5f53439c5c29c93
   EXManifests: f30a0c5d3d6cad8db9c01bab579e0aa0df5d3cb2
-  Expo: 148aac4ce0da148c63447d09ae41ddb153f35506
+  Expo: dc7907584c3517c592315a59719180037703ff33
   expo-dev-client: 8c99b4979086a27f19e773e96ef10219102a5c4f
   expo-dev-launcher: bfe7e8eadf0752211cee653f079239991f82bc81
   expo-dev-menu: 24e697acc838b1d19b635ad924487177f884e239
   expo-dev-menu-interface: 4baf2f8b3b79ce37cf4b900e4b3ba6df3384f0a1
   ExpoAsset: 8138f2a9ec55ae1ad7c3871448379f7d97692d15
   ExpoBlur: 562b3da84d3cd79016c411671eaf71a404266415
-  ExpoFileSystem: dc2679a2b5d4c465ca881129074da95faee943d5
+  ExpoClipboard: 166ca8c13ca1041f5ba619a211f59427ab5da8a7
+  ExpoFileSystem: 2161e16165279fb46e138d8ea8795c71cc6718be
   ExpoFont: 7522d869d84ee2ee8093ee997fef5b86f85d856b
   ExpoHaptics: e636188d1d5f7ccb79f3c1bfab47aaf5a1768c73
   ExpoHead: a623db43433938dcfbd6a38c27381055d01a0f3a
   ExpoKeepAwake: 783e68647b969b210a786047c3daa7b753dcac1f
   ExpoLinking: a8332a219379ba80f8e612d5a5de4a3da446886e
-  ExpoModulesCore: bb3f481a7912159f2289a653e4195146170f0a00
+  ExpoModulesCore: f7db8b4faee7e5b94ad55f2bf781781a0bcf934d
   ExpoSplashScreen: 43692d041bf848883410ed9d8836871ca5cf4d6a
   ExpoSymbols: 81d7f433d7a7b20658029eae524a4fa93627159e
   ExpoSystemUI: 97ec8f20af5e8ca18d3191c5c72e8a04e6e2f02d

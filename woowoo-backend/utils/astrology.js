@@ -1,4 +1,5 @@
 const sweph = require("sweph");
+const { geocode } = require("./geocoding");
 
 sweph.set_ephe_path("./ephemeris_files");
 
@@ -83,8 +84,25 @@ const calculatePlanetPositions = (date) => {
   }
 };
 
+const getMoonPhaseName = (sunLongitude, moonLongitude) => {
+  let elongation = (moonLongitude - sunLongitude) % 360;
+  if (elongation < 0) elongation += 360;
+
+  // Use elongation ranges to determine the phase
+  // This is one common breakdown (8 primary phases):
+  if (elongation < 22.5) return "New Moon";
+  else if (elongation < 67.5) return "Waxing Crescent";
+  else if (elongation < 112.5) return "First Quarter";
+  else if (elongation < 157.5) return "Waxing Gibbous";
+  else if (elongation < 202.5) return "Full Moon";
+  else if (elongation < 247.5) return "Waning Gibbous";
+  else if (elongation < 292.5) return "Last Quarter";
+  else if (elongation < 337.5) return "Waning Crescent";
+  else return "New Moon"; // wraps back around
+};
+
 const calculateMoonPhase = async (date) => {
-  const julday = sweph.julday(
+  const jd = sweph.julday(
     date.getUTCFullYear(),
     date.getUTCMonth() + 1,
     date.getUTCDate(),
@@ -95,7 +113,7 @@ const calculateMoonPhase = async (date) => {
   try {
     // Use a synchronous approach
     const moonInfo = sweph.pheno_ut(
-      julday,
+      jd,
       sweph.constants.SE_MOON,
       sweph.constants.SEFLG_SWIEPH
     );
@@ -105,17 +123,24 @@ const calculateMoonPhase = async (date) => {
     }
 
     const phase = moonInfo.phase * 100; // Convert to percentage
-    const moonAge = phase * 29.53;
-    let phaseName;
-    if (moonAge < 1.84566) phaseName = "New Moon";
-    else if (moonAge < 5.53699) phaseName = "Waxing Crescent";
-    else if (moonAge < 9.22831) phaseName = "First Quarter";
-    else if (moonAge < 12.91963) phaseName = "Waxing Gibbous";
-    else if (moonAge < 16.61096) phaseName = "Full Moon";
-    else if (moonAge < 20.30228) phaseName = "Waning Gibbous";
-    else if (moonAge < 23.99361) phaseName = "Last Quarter";
-    else if (moonAge < 27.68493) phaseName = "Waning Crescent";
-    else phaseName = "New Moon";
+
+    // Calculate Sun position
+    const sunPos = sweph.calc_ut(
+      jd,
+      sweph.constants.SE_SUN,
+      sweph.constants.SEFLG_SWIEPH
+    );
+    const moonPos = sweph.calc_ut(
+      jd,
+      sweph.constants.SE_MOON,
+      sweph.constants.SEFLG_SWIEPH
+    );
+
+    if (sunPos.error || moonPos.error) {
+      throw new Error("Error calculating Sun or Moon positions");
+    }
+
+    let phaseName = getMoonPhaseName(sunPos.data[0], moonPos.data[0]);
 
     return {
       percentage: phase,
@@ -307,6 +332,166 @@ const getAstrologicalEvents = (planetData, date) => {
   return events;
 };
 
+// Calculate house cusps and angles
+const calculateHouses = (jd, latitude, longitude) => {
+  try {
+    const houses = sweph.houses(
+      jd,
+      latitude,
+      longitude,
+      "P" // Placidus house system
+    );
+
+    if (!houses || !houses.data) {
+      throw new Error("Failed to calculate houses");
+    }
+
+    console.log("Houses calculation:", houses);
+    return {
+      cusps: houses.data.houses,
+      angles: {
+        ascendant: houses.data.points[0],
+        midheaven: houses.data.points[1],
+        // Descendant is exactly opposite the Ascendant
+        descendant: (houses.data.points[0] + 180) % 360,
+        // IC is exactly opposite the Midheaven
+        imumCoeli: (houses.data.points[1] + 180) % 360,
+      },
+    };
+  } catch (error) {
+    console.error("Error calculating houses:", error);
+    throw error;
+  }
+};
+
+// Calculate aspects between planets
+const calculateAspects = (planets) => {
+  const aspects = [];
+  const orbs = {
+    conjunction: 8, // 0°
+    sextile: 6, // 60°
+    square: 7, // 90°
+    trine: 8, // 120°
+    opposition: 8, // 180°
+  };
+
+  for (let i = 0; i < planets.length; i++) {
+    for (let j = i + 1; j < planets.length; j++) {
+      const planet1 = planets[i];
+      const planet2 = planets[j];
+
+      // Calculate the shortest angular distance between the two planets
+      let diff = Math.abs(planet1.longitude - planet2.longitude);
+      if (diff > 180) diff = 360 - diff;
+
+      // Check each aspect type
+      if (Math.abs(diff - 0) <= orbs.conjunction) {
+        aspects.push(
+          `${planet1.name} conjunction ${planet2.name} (orb: ${Math.abs(
+            diff - 0
+          ).toFixed(2)}°)`
+        );
+      }
+      if (Math.abs(diff - 60) <= orbs.sextile) {
+        aspects.push(
+          `${planet1.name} sextile ${planet2.name} (orb: ${Math.abs(
+            diff - 60
+          ).toFixed(2)}°)`
+        );
+      }
+      if (Math.abs(diff - 90) <= orbs.square) {
+        aspects.push(
+          `${planet1.name} square ${planet2.name} (orb: ${Math.abs(
+            diff - 90
+          ).toFixed(2)}°)`
+        );
+      }
+      if (Math.abs(diff - 120) <= orbs.trine) {
+        aspects.push(
+          `${planet1.name} trine ${planet2.name} (orb: ${Math.abs(
+            diff - 120
+          ).toFixed(2)}°)`
+        );
+      }
+      if (Math.abs(diff - 180) <= orbs.opposition) {
+        aspects.push(
+          `${planet1.name} opposition ${planet2.name} (orb: ${Math.abs(
+            diff - 180
+          ).toFixed(2)}°)`
+        );
+      }
+    }
+  }
+
+  console.log("Calculated aspects:", aspects);
+  return aspects;
+};
+
+const calculateBirthChart = async (dateOfBirth, timeOfBirth, placeOfBirth) => {
+  try {
+    const location = await geocode(placeOfBirth);
+
+    // Parse the date and time
+    const [hours, minutes] = timeOfBirth.split(":").map(Number);
+    const birthDate = new Date(dateOfBirth);
+    birthDate.setUTCHours(hours, minutes, 0, 0); // Use UTC time
+
+    // Calculate Julian date
+    const jd = sweph.julday(
+      birthDate.getUTCFullYear(),
+      birthDate.getUTCMonth() + 1,
+      birthDate.getUTCDate(),
+      birthDate.getUTCHours() + birthDate.getUTCMinutes() / 60.0,
+      sweph.constants.SE_GREG_CAL
+    );
+
+    // Calculate planet positions
+    const planetPositions = planets.map((planet) => {
+      const position = calculatePlanetPosition(
+        birthDate,
+        planet.id,
+        planet.name
+      );
+      return {
+        name: planet.name,
+        longitude: position.longitude,
+        latitude: position.latitude,
+        distance: position.distance,
+        zodiacSign: position.zodiacSign,
+      };
+    });
+
+    // Calculate houses using the correct coordinates
+    const houseData = calculateHouses(
+      jd,
+      location.latitude,
+      location.longitude
+    );
+
+    // Calculate aspects
+    const aspects = calculateAspects(planetPositions);
+
+    return {
+      timestamp: birthDate.toISOString(),
+      location: {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        place: location.formattedAddress || placeOfBirth,
+      },
+      houses: houseData.cusps,
+      ascendant: houseData.angles.ascendant,
+      midheaven: houseData.angles.midheaven,
+      descendant: houseData.angles.descendant,
+      imumCoeli: houseData.angles.imumCoeli,
+      planets: planetPositions,
+      aspects,
+    };
+  } catch (error) {
+    console.error("Error calculating birth chart:", error);
+    throw error;
+  }
+};
+
 // Define the planets array at the top level
 const planets = [
   { name: "Sun", id: sweph.constants.SE_SUN },
@@ -333,4 +518,5 @@ module.exports = {
   getSignificantAspects,
   getMoonPhase,
   getAstrologicalEvents,
+  calculateBirthChart,
 };

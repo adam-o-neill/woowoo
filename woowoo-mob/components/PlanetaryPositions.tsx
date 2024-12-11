@@ -96,11 +96,11 @@ const styles = StyleSheet.create({
     fontFamily: "SpaceMono",
   },
   container: {
-    backgroundColor: "#000",
     paddingVertical: 10,
+    backgroundColor: "#111",
     borderWidth: 1,
-    borderColor: "#fff",
-    borderRadius: 10,
+    borderColor: "#333",
+    borderRadius: 12,
   },
   row: {
     flexDirection: "row",

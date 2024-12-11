@@ -8,33 +8,11 @@ import {
   TextInput,
   Button,
   ActivityIndicator,
-  ScrollView,
-  Alert,
-  Platform,
 } from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  birthChartAPI,
-  BirthInfo,
-  ChartData,
-  Planet,
-} from "@/lib/api/birthChart";
+import { birthChartAPI, BirthInfo, ChartData } from "@/lib/api/birthChart";
 import { format } from "date-fns";
-
-const ZODIAC_SIGNS = [
-  "Aries",
-  "Taurus",
-  "Gemini",
-  "Cancer",
-  "Leo",
-  "Virgo",
-  "Libra",
-  "Scorpio",
-  "Sagittarius",
-  "Capricorn",
-  "Aquarius",
-  "Pisces",
-];
+import { Section } from "./Section";
 
 // Add these symbol mappings at the top
 const planetSymbols: { [key: string]: string } = {
@@ -65,7 +43,7 @@ const zodiacSymbols: { [key: string]: string } = {
   Pisces: "L",
 };
 
-export function PersonalInsights() {
+export function BirthChart() {
   const { session } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
   const [birthInfo, setBirthInfo] = useState<BirthInfo | null>(null);
@@ -90,6 +68,7 @@ export function PersonalInsights() {
           timeOfBirth: data.birthInfo.timeOfBirth,
           placeOfBirth: data.birthInfo.placeOfBirth,
         });
+        console.log("data", data);
         setChartData(JSON.parse(data.birthChart.chartData));
       } catch (error) {
         console.error("Error fetching birth info:", error);
@@ -126,13 +105,6 @@ export function PersonalInsights() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatPlanetaryPosition = (planet: string, position: any) => {
-    const sign = ZODIAC_SIGNS[position.sign];
-    const degree = Math.floor(position.degree);
-    const minute = Math.floor((position.degree - degree) * 60);
-    return `${planet}: ${sign} ${degree}°${minute}'`;
   };
 
   // Add this helper function to convert decimal degrees to DMS format
@@ -242,94 +214,87 @@ export function PersonalInsights() {
       </View>
     );
   }
-
+  console.log(chartData);
   return (
-    <ScrollView style={styles.insightsContainer}>
-      <Text style={styles.insightsTitle}>Birth Chart</Text>
+    <View style={styles.container}>
+      <Section title="My Birth Chart" container>
+        <Section title="Birth Details">
+          <Text style={styles.text}>
+            Date: {format(new Date(chartData.timestamp), "PPP")}
+          </Text>
+          <Text style={styles.text}>
+            Time: {format(new Date(chartData.timestamp), "p")}
+          </Text>
+          <Text style={styles.text}>Place: {chartData.location.place}</Text>
+        </Section>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Birth Details</Text>
-        <Text style={styles.text}>
-          Date: {format(new Date(chartData.timestamp), "PPP")}
-        </Text>
-        <Text style={styles.text}>
-          Time: {format(new Date(chartData.timestamp), "p")}
-        </Text>
-        <Text style={styles.text}>Place: {chartData.location.place}</Text>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Angular Points</Text>
-        {[
-          { name: "Ascendant (Rising)", value: chartData.ascendant },
-          { name: "Midheaven (MC)", value: chartData.midheaven },
-          { name: "Descendant (DC)", value: chartData.descendant },
-          { name: "Imum Coeli (IC)", value: chartData.imumCoeli },
-        ].map((point) => {
-          const position = getZodiacPosition(point.value);
-          return (
-            <Text key={point.name} style={styles.text}>
-              {point.name}:{" "}
-              <Text style={styles.astronomicon}>{position.symbol}</Text>{" "}
-              {position.sign} {position.position}
-            </Text>
-          );
-        })}
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Planetary Positions</Text>
-        {chartData.planets.map((planet) => {
-          const position = getZodiacPosition(planet.longitude);
-          return (
-            <View key={planet.name} style={styles.planetRow}>
-              <Text style={styles.text}>
-                <Text style={styles.astronomicon}>
-                  {planetSymbols[planet.name]}
-                </Text>{" "}
-                {planet.name}:{" "}
+        <Section title="Angular Points">
+          {[
+            { name: "Ascendant (Rising)", value: chartData.ascendant },
+            { name: "Midheaven (MC)", value: chartData.midheaven },
+            { name: "Descendant (DC)", value: chartData.descendant },
+            { name: "Imum Coeli (IC)", value: chartData.imumCoeli },
+          ].map((point) => {
+            const position = getZodiacPosition(point.value);
+            return (
+              <Text key={point.name} style={styles.text}>
+                {point.name}:{" "}
                 <Text style={styles.astronomicon}>{position.symbol}</Text>{" "}
                 {position.sign} {position.position}
               </Text>
-              {/* <Text style={styles.smallText}>
-                Lat: {formatDegrees(planet.latitude)}
-              </Text> */}
-            </View>
-          );
-        })}
-      </View>
+            );
+          })}
+        </Section>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>House Cusps</Text>
-        {chartData.houses.map((cusp, index) => {
-          const position = getZodiacPosition(cusp);
-          return (
-            <Text key={index} style={styles.text}>
-              House {index + 1}:{" "}
-              <Text style={styles.astronomicon}>{position.symbol}</Text>{" "}
-              {position.sign} {position.position}
-            </Text>
-          );
-        })}
-      </View>
+        <Section title="Planetary Positions">
+          {chartData.planets.map((planet) => {
+            const position = getZodiacPosition(planet.longitude);
+            return (
+              <View key={planet.name} style={styles.planetRow}>
+                <Text style={styles.text}>
+                  <Text style={styles.astronomicon}>
+                    {planetSymbols[planet.name]}
+                  </Text>{" "}
+                  {planet.name}:{" "}
+                  <Text style={styles.astronomicon}>{position.symbol}</Text>{" "}
+                  {position.sign} {position.position}
+                </Text>
+              </View>
+            );
+          })}
+        </Section>
 
-      {chartData.aspects && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Major Aspects</Text>
-          {chartData.aspects.map((aspect, index) => (
-            <Text key={index} style={styles.text}>
-              {aspect}
-            </Text>
-          ))}
-        </View>
-      )}
-    </ScrollView>
+        <Section title="House Cusps">
+          {chartData.houses &&
+            chartData.houses.map((cusp, index) => {
+              const position = getZodiacPosition(cusp);
+              return (
+                <Text key={index} style={styles.text}>
+                  House {index + 1}:{" "}
+                  <Text style={styles.astronomicon}>{position.symbol}</Text>{" "}
+                  {position.sign} {position.position}
+                </Text>
+              );
+            })}
+        </Section>
+
+        {chartData.aspects && (
+          <Section title="Major Aspects">
+            {chartData.aspects.map((aspect, index) => (
+              <Text key={index} style={styles.text}>
+                {aspect}
+              </Text>
+            ))}
+          </Section>
+        )}
+      </Section>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
+    paddingVertical: 16,
   },
   promptButton: {
     padding: 16,
@@ -404,21 +369,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  section: {
-    marginBottom: 24,
-    padding: 16,
-    backgroundColor: "#111",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#333",
-  },
-  sectionTitle: {
-    fontSize: 18,
-    color: "#fff",
-    fontFamily: "SpaceMono",
-    marginBottom: 12,
-    fontWeight: "bold",
-  },
   text: {
     color: "#fff",
     fontFamily: "SpaceMono",
@@ -429,7 +379,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 8,
+    // marginBottom: 8,
   },
   smallText: {
     color: "#999",

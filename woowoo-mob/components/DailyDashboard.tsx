@@ -1,15 +1,9 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-} from "react-native";
-import { format } from "date-fns";
+import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import { apiClient } from "../lib/api/client";
 import { useAuth } from "@/contexts/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Section } from "./Section";
 
 interface DailyInsights {
   daily_horoscope: string;
@@ -108,25 +102,14 @@ export function DailyDashboard() {
   }
 
   return (
-    <View
-      style={styles.container}
-      //   refreshControl={
-      //     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      //   }
-    >
-      <Text style={styles.date}>
-        {format(new Date(), "EEEE, MMMM d, yyyy")}
-      </Text>
-
+    <View style={styles.container}>
       {insights && (
         <>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Daily Horoscope</Text>
+          <Section title="Daily Horoscope">
             <Text style={styles.text}>{insights.daily_horoscope}</Text>
-          </View>
+          </Section>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Emotional Forecast</Text>
+          <Section title="Emotional Forecast">
             <View style={styles.moodContainer}>
               <Text style={styles.emoji}>
                 {insights.emotional_forecast.emoji}
@@ -135,27 +118,25 @@ export function DailyDashboard() {
                 {insights.emotional_forecast.insight}
               </Text>
             </View>
-          </View>
+          </Section>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Moon Phase</Text>
+          <Section title="Moon Phase">
             <Text style={styles.moonPhase}>
               {insights.moon_phase_insights.phase}
             </Text>
             <Text style={styles.text}>
               {insights.moon_phase_insights.insight}
             </Text>
-          </View>
+          </Section>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Suggested Activities</Text>
+          <Section title="Suggested Activities">
             {insights.activity_suggestions.map((activity, index) => (
               <View key={index} style={styles.activityItem}>
                 <Text style={styles.bullet}>•</Text>
                 <Text style={styles.text}>{activity}</Text>
               </View>
             ))}
-          </View>
+          </Section>
         </>
       )}
     </View>
@@ -166,6 +147,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: "#000",
     paddingTop: 16,
+    gap: 16,
   },
   loadingContainer: {
     flex: 1,
@@ -186,18 +168,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontFamily: "SpaceMono",
   },
-  date: {
-    color: "#fff",
-    fontSize: 20,
-    fontFamily: "SpaceMono",
-    marginBottom: 24,
-    textAlign: "center",
-  },
   section: {
-    backgroundColor: "#111",
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
+    backgroundColor: "#111",
     borderWidth: 1,
     borderColor: "#333",
   },

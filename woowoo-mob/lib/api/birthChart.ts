@@ -32,6 +32,7 @@ export interface ChartData {
 
 export const birthChartAPI = {
   getBirthInfo: async (accessToken: string) => {
+    console.log("accessToken", accessToken);
     return apiClient.authenticatedFetch("/api/birth-info", accessToken);
   },
 
