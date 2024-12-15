@@ -25,6 +25,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#111",
     borderWidth: 1,
     borderColor: "#333",
+    color: "#fff",
   },
   sectionTitle: {
     color: "#fff",

@@ -7,7 +7,7 @@ const rateLimit = require("express-rate-limit");
 // Import routes
 const birthInfoRouter = require("./routes/birthInfo");
 const dailyDashboardRouter = require("./routes/dailyDashboard");
-const astrologicalForecastRouter = require("./routes/astrologicalForecast");
+const scenariosRouter = require("./routes/scenarios");
 
 // Import middleware
 const { authenticateApiKey } = require("./middleware/auth");
@@ -77,10 +77,10 @@ app.use(authenticateApiKey);
 // Routes
 app.use("/api", birthInfoRouter);
 app.use("/api", dailyDashboardRouter);
-app.use("/api", astrologicalForecastRouter);
+app.use("/api", scenariosRouter);
 
 // Error handling
-app.use((err, req, res, next) => {
+app.use((err, req, res) => {
   console.error(err.stack);
   res.status(500).json({
     error:

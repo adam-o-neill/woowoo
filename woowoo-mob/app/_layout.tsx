@@ -5,8 +5,10 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import "react-native-reanimated";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { BirthChartProvider } from "@/contexts/BirthChartContext";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -77,6 +79,9 @@ function AppNavigator() {
   );
 }
 
+// Create a client
+const queryClient = new QueryClient();
+
 export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
@@ -94,11 +99,15 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider>
-      <ThemeProvider value={CustomDarkTheme}>
-        <AppNavigator />
-        <StatusBar style="light" />
-      </ThemeProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BirthChartProvider>
+          <ThemeProvider value={CustomDarkTheme}>
+            <AppNavigator />
+            <StatusBar style="light" />
+          </ThemeProvider>
+        </BirthChartProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }

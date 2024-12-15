@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -9,10 +9,10 @@ import {
   Button,
   ActivityIndicator,
 } from "react-native";
-import { useAuth } from "@/contexts/AuthContext";
-import { birthChartAPI, BirthInfo, ChartData } from "@/lib/api/birthChart";
 import { format } from "date-fns";
 import { Section } from "./Section";
+import { useBirthChart } from "@/contexts/BirthChartContext";
+import { BirthInfo } from "@/lib/api/birthChart";
 
 // Add these symbol mappings at the top
 const planetSymbols: { [key: string]: string } = {
@@ -44,68 +44,35 @@ const zodiacSymbols: { [key: string]: string } = {
 };
 
 export function BirthChart() {
-  const { session } = useAuth();
+  const { birthInfo, chartData, loading, error, updateBirthInfo } =
+    useBirthChart();
   const [modalVisible, setModalVisible] = useState(false);
-  const [birthInfo, setBirthInfo] = useState<BirthInfo | null>(null);
-  const [chartData, setChartData] = useState<ChartData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [fetchingData, setFetchingData] = useState(true);
 
   // Form state
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [timeOfBirth, setTimeOfBirth] = useState("");
   const [placeOfBirth, setPlaceOfBirth] = useState("");
 
-  // Fetch existing birth info on component mount
-  useEffect(() => {
-    const fetchBirthInfo = async () => {
-      try {
-        if (!session?.access_token) return;
-
-        const data = await birthChartAPI.getBirthInfo(session.access_token);
-        setBirthInfo({
-          dateOfBirth: data.birthInfo.dateOfBirth,
-          timeOfBirth: data.birthInfo.timeOfBirth,
-          placeOfBirth: data.birthInfo.placeOfBirth,
-        });
-        console.log("data", data);
-        setChartData(JSON.parse(data.birthChart.chartData));
-      } catch (error) {
-        console.error("Error fetching birth info:", error);
-      } finally {
-        setFetchingData(false);
-      }
-    };
-
-    if (session) {
-      fetchBirthInfo();
-    }
-  }, [session]);
-
   const handleSubmit = async () => {
-    if (!session?.access_token) return;
-
-    setLoading(true);
     try {
-      const data = await birthChartAPI.submitBirthInfo(session.access_token, {
+      await updateBirthInfo({
         dateOfBirth,
         timeOfBirth,
         placeOfBirth,
       });
-
-      setBirthInfo({
-        dateOfBirth,
-        timeOfBirth,
-        placeOfBirth,
-      });
-      setChartData(JSON.parse(data.birthChart.chartData));
       setModalVisible(false);
     } catch (error) {
       console.error("Error saving birth info:", error);
-    } finally {
-      setLoading(false);
     }
   };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#fff" />
+      </View>
+    );
+  }
 
   // Add this helper function to convert decimal degrees to DMS format
   const formatDegrees = (decimal: number) => {
@@ -145,14 +112,6 @@ export function BirthChart() {
       position: formatDegrees(position),
     };
   };
-
-  if (fetchingData) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#fff" />
-      </View>
-    );
-  }
 
   if (!birthInfo || !chartData) {
     return (
@@ -214,7 +173,7 @@ export function BirthChart() {
       </View>
     );
   }
-  console.log(chartData);
+
   return (
     <View style={styles.container}>
       <Section title="My Birth Chart" container>

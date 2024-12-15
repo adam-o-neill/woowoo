@@ -37,7 +37,6 @@ class APIClient {
     options: RequestInit = {}
   ) {
     console.log("fetching", endpoint);
-    console.log("options", options);
     return this.fetch(endpoint, {
       ...options,
       headers: {

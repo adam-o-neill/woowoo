@@ -1,6 +1,7 @@
 import { apiClient } from "./client";
 
 export interface BirthInfo {
+  id?: string;
   dateOfBirth: string;
   timeOfBirth: string;
   placeOfBirth: string;
@@ -32,7 +33,6 @@ export interface ChartData {
 
 export const birthChartAPI = {
   getBirthInfo: async (accessToken: string) => {
-    console.log("accessToken", accessToken);
     return apiClient.authenticatedFetch("/api/birth-info", accessToken);
   },
 
