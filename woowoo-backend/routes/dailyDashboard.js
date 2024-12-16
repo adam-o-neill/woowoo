@@ -10,6 +10,7 @@ const router = express.Router();
 
 // Get daily dashboard data for current user
 router.get("/daily-dashboard", authenticateUser, async (req, res) => {
+  console.log("Fetching daily dashboard data");
   try {
     // First get the user's birth info and chart
     const userBirthInfo = await db

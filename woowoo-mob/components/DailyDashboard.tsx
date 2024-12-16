@@ -15,7 +15,7 @@ interface DailyInsights {
     phase: string;
     insight: string;
   };
-  activity_suggestions: string[];
+  daily_quests: string[];
 }
 
 export function DailyDashboard() {
@@ -32,12 +32,12 @@ export function DailyDashboard() {
       const cached = cachedData ? JSON.parse(cachedData) : {};
 
       // If we have today's data in cache, use it
-      if (cached[today]) {
-        console.log("Using cached daily dashboard data");
-        setInsights(cached[today]);
-        setLoading(false);
-        return;
-      }
+      // if (cached[today]) {
+      //   console.log("Using cached daily dashboard data");
+      //   setInsights(cached[today]);
+      //   setLoading(false);
+      //   return;
+      // }
 
       // If no cached data for today, fetch from API
       console.log("Fetching fresh daily dashboard data");
@@ -49,7 +49,7 @@ export function DailyDashboard() {
       // Update cache with new data
       cached[today] = response.insights;
       await AsyncStorage.setItem("dailyDashboard", JSON.stringify(cached));
-
+      console.log(response.insights);
       setInsights(response.insights);
     } catch (error) {
       console.error("Error fetching daily insights:", error);
@@ -129,11 +129,11 @@ export function DailyDashboard() {
             </Text>
           </Section>
 
-          <Section title="Suggested Activities">
-            {insights.activity_suggestions.map((activity, index) => (
+          <Section title="Daily Quest">
+            {insights.daily_quests.map((quest, index) => (
               <View key={index} style={styles.activityItem}>
                 <Text style={styles.bullet}>•</Text>
-                <Text style={styles.text}>{activity}</Text>
+                <Text style={styles.text}>{quest}</Text>
               </View>
             ))}
           </Section>

@@ -23,6 +23,8 @@ const styles = StyleSheet.create({
     display: "flex",
     gap: 16,
     backgroundColor: "#000",
+    paddingHorizontal: 16,
+    paddingBottom: 100,
   },
   date: {
     color: "#fff",

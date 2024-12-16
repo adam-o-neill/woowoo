@@ -17,4 +17,12 @@ const birthChart = pgTable("birth_chart", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-module.exports = { birthInfo, birthChart };
+const scenarioResponse = pgTable("scenario_response", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  scenarioId: text("scenario_id").notNull(),
+  birthInfoId: uuid("birth_info_id").references(() => birthInfo.id),
+  response: text("response").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+module.exports = { birthInfo, birthChart, scenarioResponse };

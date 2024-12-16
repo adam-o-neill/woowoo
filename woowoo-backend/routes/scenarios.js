@@ -3,8 +3,8 @@ const { authenticateUser } = require("../auth/supabase");
 const router = express.Router();
 const { openai } = require("../utils/openai");
 const { db } = require("../db");
-const { birthChart } = require("../db/schema");
-const { eq } = require("drizzle-orm");
+const { birthChart, scenarioResponse } = require("../db/schema");
+const { eq, and } = require("drizzle-orm");
 
 function formatChartDataForAI(chartData) {
   const data = JSON.parse(chartData);
@@ -65,6 +65,27 @@ router.post("/scenarios/activate", authenticateUser, async (req, res) => {
   try {
     const { scenario, userBirthInfoId } = req.body;
 
+    // Check if we already have a response for this scenario and birth info
+    const existingResponse = await db
+      .select()
+      .from(scenarioResponse)
+      .where(
+        and(
+          eq(scenarioResponse.scenarioId, scenario.id),
+          eq(scenarioResponse.birthInfoId, userBirthInfoId)
+        )
+      )
+      .limit(1);
+
+    if (existingResponse.length > 0) {
+      // Return existing response if found
+      return res.json({
+        scenarioId: scenario.id,
+        result: existingResponse[0].response,
+      });
+    }
+
+    // If no existing response, generate new one
     const chartData = await db
       .select()
       .from(birthChart)
@@ -79,7 +100,7 @@ router.post("/scenarios/activate", authenticateUser, async (req, res) => {
 
     // Generate OpenAI completion
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4-turbo-preview",
       messages: [
         {
           role: "system",
@@ -93,9 +114,18 @@ router.post("/scenarios/activate", authenticateUser, async (req, res) => {
       ],
     });
 
+    const generatedResponse = response.choices[0].message.content;
+
+    // Save the response to the database
+    await db.insert(scenarioResponse).values({
+      scenarioId: scenario.id,
+      birthInfoId: userBirthInfoId,
+      response: generatedResponse,
+    });
+
     res.json({
       scenarioId: scenario.id,
-      result: response.choices[0].message.content,
+      result: generatedResponse,
     });
   } catch (error) {
     console.error("Scenario activation error:", error);

@@ -12,7 +12,7 @@ const generateDailyInsights = async (natalChart, currentTransits) => {
         {
           role: "system",
           content: `You are an expert astrologer specializing in daily forecasts. 
-          Always return responses in the exact JSON structure provided, with no additional fields.`,
+          Always return short responses in the exact JSON structure provided, with no additional fields.`,
         },
         {
           role: "user",
@@ -22,7 +22,7 @@ const generateDailyInsights = async (natalChart, currentTransits) => {
           
           Return the response in this exact JSON structure:
           {
-            "daily_horoscope": "A detailed daily horoscope prediction",
+            "daily_horoscope": "A brief daily horoscope prediction",
             "emotional_forecast": {
               "insight": "An analysis of emotional energies for the day",
               "emoji": "3-5 relevant emojis that capture the emotional tone"
@@ -31,10 +31,8 @@ const generateDailyInsights = async (natalChart, currentTransits) => {
               "phase": "${currentTransits.moonPhase.name}",
               "insight": "Specific insights about how this moon phase affects the day"
             },
-            "activity_suggestions": [
-              "3-4 specific activity suggestions",
-              "based on the current transits",
-              "and natal chart aspects"
+            "daily_quest": [
+              "1 specific creative fun daily quest based on the current transits and natal chart aspects"
             ]
           }`,
         },
@@ -64,36 +62,15 @@ const generateDailyInsights = async (natalChart, currentTransits) => {
           parsedResponse.moon_phase_insights?.insight ||
           "Unable to generate moon phase insights.",
       },
-      activity_suggestions: Array.isArray(parsedResponse.activity_suggestions)
-        ? parsedResponse.activity_suggestions
-        : [
-            "Take time for self-reflection",
-            "Practice grounding exercises",
-            "Connect with loved ones",
-          ],
+      daily_quests: Array.isArray(parsedResponse.daily_quests)
+        ? parsedResponse.daily_quests
+        : ["Unable to generate quests."],
     };
     return validatedResponse;
   } catch (error) {
     console.error("Error generating daily insights:", error);
     // Return a fallback response that matches the interface
-    return {
-      daily_horoscope:
-        "Unable to generate horoscope at this time. Please try again later.",
-      emotional_forecast: {
-        insight:
-          "Temporary technical difficulties in generating your emotional forecast.",
-        emoji: "🤔",
-      },
-      moon_phase_insights: {
-        phase: currentTransits.moonPhase.name || "Unknown",
-        insight: "Moon phase insights temporarily unavailable.",
-      },
-      activity_suggestions: [
-        "Take some time for self-reflection",
-        "Practice grounding exercises",
-        "Connect with loved ones",
-      ],
-    };
+    return null;
   }
 };
 
