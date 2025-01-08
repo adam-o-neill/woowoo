@@ -1,15 +1,15 @@
-const express = require("express");
-const { authenticateUser } = require("../auth/supabase");
-const { db } = require("../db");
-const { birthInfo, birthChart } = require("../db/schema");
-const { eq } = require("drizzle-orm");
-const { calculateCurrentTransits } = require("../utils/astrology");
-const { generateDailyInsights } = require("../utils/openai");
+import express, { Request, Response } from "express";
+import { authenticateUser } from "../auth/supabase";
+import { db } from "../db";
+import { birthInfo, birthChart } from "../db/schema";
+import { eq } from "drizzle-orm";
+import { calculateCurrentTransits } from "../utils/astrology";
+import { generateDailyInsights } from "../utils/openai";
 
 const router = express.Router();
 
 // Get daily dashboard data for current user
-router.get("/daily-dashboard", authenticateUser, async (req, res) => {
+router.get("/daily-dashboard", authenticateUser, async (req: any, res: any) => {
   console.log("Fetching daily dashboard data");
   try {
     // First get the user's birth info and chart
@@ -51,4 +51,4 @@ router.get("/daily-dashboard", authenticateUser, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

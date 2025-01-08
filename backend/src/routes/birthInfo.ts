@@ -1,14 +1,20 @@
-const express = require("express");
-const { authenticateUser } = require("../auth/supabase");
-const { db } = require("../db");
-const { birthInfo, birthChart } = require("../db/schema");
-const { eq } = require("drizzle-orm");
-const { calculateBirthChart } = require("../utils/astrology");
+import express, { Request, Response } from "express";
+import { authenticateUser } from "../auth/supabase";
+import { db } from "../db";
+import { birthInfo, birthChart } from "../db/schema";
+import { eq } from "drizzle-orm";
+import { calculateBirthChart } from "../utils/astrology";
 
 const router = express.Router();
 
+interface BirthInfoRequest {
+  dateOfBirth: string;
+  timeOfBirth: string;
+  placeOfBirth: string;
+}
+
 // Get birth info for current user
-router.get("/birth-info", authenticateUser, async (req, res) => {
+router.get("/birth-info", authenticateUser, async (req: any, res: any) => {
   try {
     // First get the birth info
     const userBirthInfo = await db
@@ -39,7 +45,7 @@ router.get("/birth-info", authenticateUser, async (req, res) => {
 });
 
 // Create or update birth info
-router.post("/birth-info", authenticateUser, async (req, res) => {
+router.post("/birth-info", authenticateUser, async (req: any, res: any) => {
   try {
     const { dateOfBirth, timeOfBirth, placeOfBirth } = req.body;
 
@@ -98,4 +104,4 @@ router.post("/birth-info", authenticateUser, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

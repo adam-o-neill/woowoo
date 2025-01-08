@@ -1,4 +1,4 @@
-const validateDateParam = (req, res, next) => {
+const validateDateParam = (req: any, res: any, next: Function) => {
   const { date } = req.query;
 
   if (!date) {
@@ -25,6 +25,4 @@ const validateDateParam = (req, res, next) => {
   next();
 };
 
-module.exports = {
-  validateDateParam,
-};
+export { validateDateParam };

@@ -1,4 +1,4 @@
-const authenticateApiKey = (req, res, next) => {
+const authenticateApiKey = (req: any, res: any, next: Function) => {
   const apiKey = req.headers["x-api-key"] || req.query.apiKey;
 
   if (!apiKey || apiKey !== process.env.API_KEY) {
@@ -8,6 +8,4 @@ const authenticateApiKey = (req, res, next) => {
   next();
 };
 
-module.exports = {
-  authenticateApiKey,
-};
+export { authenticateApiKey };

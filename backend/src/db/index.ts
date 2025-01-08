@@ -10,15 +10,15 @@ const db = drizzle(pool, { schema });
 
 db.query = {
   birthInfo: {
-    findFirst: async (options) => {
+    findFirst: async (options: any) => {
       return db
         .select()
         .from(schema.birthInfo)
         .where(options.where)
         .limit(1)
-        .then((rows) => rows[0]);
+        .then((rows: any) => rows[0]);
     },
   },
 };
 
-module.exports = { db };
+export { db };

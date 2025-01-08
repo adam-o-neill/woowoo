@@ -12,9 +12,8 @@ export const scenarios: Scenario[] = [
   {
     id: "3-words",
     title: "In 3 Words",
-    description: "Generate a short description of this person in 3 words",
-    prompt:
-      "Generate a short description of this person in 3 words based on their birth chart.",
+    description: "What 3 words encapsulate you based on your birth chart.",
+    prompt: "What 3 words encapsulate this person based on their birth chart.",
     icon: "💬",
   },
   {
@@ -40,7 +39,7 @@ export const scenarios: Scenario[] = [
     id: "dating-profile",
     title: "Dating Profile Bio",
     description:
-      "Generate a dating profile that reflects your astrological nature",
+      "Generate a short dating profile that reflects your astrological nature",
     prompt:
       "Create an engaging and authentic dating profile bio based on this person's birth chart. Include their most attractive qualities, values, and what they seek in relationships, as indicated by their Venus, Mars, and 7th house placements. Write in a way that is true to their astrological nature. While the bio is based on the birth chart, it should not mention astrology or zodiac signs directly.",
     icon: "❤️",

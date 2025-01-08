@@ -1,9 +1,16 @@
-const sweph = require("sweph");
-const { geocode } = require("./geocoding");
+import sweph from "sweph";
+import { geocode } from "./geocoding";
+import {
+  Planet,
+  PlanetPosition,
+  NatalChart,
+  Transits,
+  AstrologicalEvent,
+} from "../constants/types";
 
 sweph.set_ephe_path("./ephemeris_files");
 
-const getZodiacSign = (longitude) => {
+const getZodiacSign = (longitude: number) => {
   const signs = [
     "Aries",
     "Taurus",
@@ -21,7 +28,7 @@ const getZodiacSign = (longitude) => {
   return signs[Math.floor(longitude / 30)];
 };
 
-const getJulianDate = (date) => {
+const getJulianDate = (date: Date) => {
   const hour =
     date.getUTCHours() +
     date.getUTCMinutes() / 60 +
@@ -35,7 +42,11 @@ const getJulianDate = (date) => {
   );
 };
 
-const calculatePlanetPosition = (date, planetId, planetName) => {
+const calculatePlanetPosition = (
+  date: Date,
+  planetId: number,
+  planetName: string
+) => {
   try {
     const jd = getJulianDate(date);
 
@@ -63,7 +74,7 @@ const calculatePlanetPosition = (date, planetId, planetName) => {
   }
 };
 
-const calculatePlanetPositions = (date) => {
+const calculatePlanetPositions = (date: Date) => {
   try {
     // Calculate positions for all planets
     const planetData = planets.map((planet) => {
@@ -84,7 +95,7 @@ const calculatePlanetPositions = (date) => {
   }
 };
 
-const getMoonPhaseName = (sunLongitude, moonLongitude) => {
+const getMoonPhaseName = (sunLongitude: number, moonLongitude: number) => {
   let elongation = (moonLongitude - sunLongitude) % 360;
   if (elongation < 0) elongation += 360;
 
@@ -101,7 +112,7 @@ const getMoonPhaseName = (sunLongitude, moonLongitude) => {
   else return "New Moon"; // wraps back around
 };
 
-const calculateMoonPhase = async (date) => {
+const calculateMoonPhase = async (date: Date) => {
   const jd = sweph.julday(
     date.getUTCFullYear(),
     date.getUTCMonth() + 1,
@@ -122,7 +133,7 @@ const calculateMoonPhase = async (date) => {
       throw new Error("Error calculating moon phase");
     }
 
-    const phase = moonInfo.phase * 100; // Convert to percentage
+    const phase = moonInfo.data[1] * 100; // Convert to percentage
 
     // Calculate Sun position
     const sunPos = sweph.calc_ut(
@@ -145,7 +156,7 @@ const calculateMoonPhase = async (date) => {
     return {
       percentage: phase,
       name: phaseName,
-      illumination: moonInfo.phaseAngle,
+      illumination: moonInfo.data[0],
     };
   } catch (error) {
     console.error("Error calculating moon phase:", error);
@@ -153,8 +164,8 @@ const calculateMoonPhase = async (date) => {
   }
 };
 
-const calculateTransitAspects = (transitPlanets, natalPlanets) => {
-  const aspects = [];
+const calculateTransitAspects = (transitPlanets: any, natalPlanets: any) => {
+  const aspects: any[] = [];
   const orbs = {
     conjunction: 8,
     opposition: 8,
@@ -163,8 +174,8 @@ const calculateTransitAspects = (transitPlanets, natalPlanets) => {
     sextile: 6,
   };
 
-  transitPlanets.forEach((transitPlanet) => {
-    natalPlanets.forEach((natalPlanet) => {
+  transitPlanets.forEach((transitPlanet: PlanetPosition) => {
+    natalPlanets.forEach((natalPlanet: PlanetPosition) => {
       const aspect = calculateAspect(
         transitPlanet.longitude,
         natalPlanet.longitude,
@@ -185,7 +196,7 @@ const calculateTransitAspects = (transitPlanets, natalPlanets) => {
   return aspects;
 };
 
-const calculateAspect = (long1, long2, orbs) => {
+const calculateAspect = (long1: number, long2: number, orbs: any) => {
   const diff = Math.abs(long1 - long2);
   const aspects = [
     { name: "conjunction", angle: 0, orb: orbs.conjunction },
@@ -208,13 +219,16 @@ const calculateAspect = (long1, long2, orbs) => {
   return null;
 };
 
-const calculateCurrentTransits = async (date, natalChartData) => {
+const calculateCurrentTransits = async (
+  date: Date,
+  natalChartData: NatalChart
+) => {
   try {
     const transits = {
       planets: [],
       aspects: [],
       moonPhase: null,
-    };
+    } as Transits;
 
     // Parse natal chart data if it's a string
     const natalChart =
@@ -228,10 +242,7 @@ const calculateCurrentTransits = async (date, natalChartData) => {
         planet.id,
         planet.name
       );
-      transits.planets.push({
-        name: planet,
-        ...position,
-      });
+      transits.planets.push(position);
     }
 
     // Calculate Moon phase
@@ -251,7 +262,7 @@ const calculateCurrentTransits = async (date, natalChartData) => {
   }
 };
 
-const getSignificantAspects = (planetData) => {
+const getSignificantAspects = (planetData: PlanetPosition[]) => {
   const aspects = [];
   const orbs = {
     conjunction: 8,
@@ -280,7 +291,7 @@ const getSignificantAspects = (planetData) => {
   return aspects;
 };
 
-const getMoonPhase = (date) => {
+const getMoonPhase = (date: string) => {
   try {
     const jd = getJulianDate(new Date(date));
     const moonInfo = sweph.pheno_ut(
@@ -288,7 +299,7 @@ const getMoonPhase = (date) => {
       sweph.constants.SE_MOON,
       sweph.constants.SEFLG_SWIEPH
     );
-    const phase = moonInfo.phase * 100;
+    const phase = moonInfo.data[1] * 100;
     const moonAge = phase * 29.53;
 
     let phaseName;
@@ -312,8 +323,8 @@ const getMoonPhase = (date) => {
   }
 };
 
-const getAstrologicalEvents = (planetData, date) => {
-  const events = [];
+const getAstrologicalEvents = (planetData: PlanetPosition[], date: string) => {
+  const events: AstrologicalEvent[] = [];
   const significantDegrees = [0, 30, 60, 90, 120, 150, 180];
 
   planetData.forEach((planet) => {
@@ -333,7 +344,7 @@ const getAstrologicalEvents = (planetData, date) => {
 };
 
 // Calculate house cusps and angles
-const calculateHouses = (jd, latitude, longitude) => {
+const calculateHouses = (jd: number, latitude: number, longitude: number) => {
   try {
     const houses = sweph.houses(
       jd,
@@ -365,8 +376,8 @@ const calculateHouses = (jd, latitude, longitude) => {
 };
 
 // Calculate aspects between planets
-const calculateAspects = (planets) => {
-  const aspects = [];
+const calculateAspects = (planets: PlanetPosition[]) => {
+  const aspects: string[] = [];
   const orbs = {
     conjunction: 8, // 0°
     sextile: 6, // 60°
@@ -427,7 +438,11 @@ const calculateAspects = (planets) => {
   return aspects;
 };
 
-const calculateBirthChart = async (dateOfBirth, timeOfBirth, placeOfBirth) => {
+const calculateBirthChart = async (
+  dateOfBirth: string,
+  timeOfBirth: string,
+  placeOfBirth: string
+) => {
   try {
     const location = await geocode(placeOfBirth);
 
@@ -506,8 +521,7 @@ const planets = [
   { name: "Pluto", id: sweph.constants.SE_PLUTO },
 ];
 
-// Update the exports to include all required functions
-module.exports = {
+export {
   planets,
   calculateCurrentTransits,
   calculatePlanetPosition,

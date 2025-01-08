@@ -1,6 +1,6 @@
-const axios = require("axios");
+import axios from "axios";
 
-const geocodeWithGoogle = async (placeOfBirth) => {
+const geocodeWithGoogle = async (placeOfBirth: string) => {
   try {
     const response = await axios.get(
       `https://maps.googleapis.com/maps/api/geocode/json`,
@@ -29,12 +29,12 @@ const geocodeWithGoogle = async (placeOfBirth) => {
 };
 
 // Wrapper function to use either service
-const geocode = async (placeOfBirth) => {
+const geocode = async (placeOfBirth: string) => {
   if (process.env.GOOGLE_MAPS_API_KEY) {
     return geocodeWithGoogle(placeOfBirth);
+  } else {
+    throw new Error("Google Maps API key is not set");
   }
 };
 
-module.exports = {
-  geocode,
-};
+export { geocode };

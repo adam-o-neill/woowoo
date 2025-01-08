@@ -25,4 +25,4 @@ const scenarioResponse = pgTable("scenario_response", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-module.exports = { birthInfo, birthChart, scenarioResponse };
+export { birthInfo, birthChart, scenarioResponse };

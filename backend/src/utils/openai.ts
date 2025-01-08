@@ -1,10 +1,10 @@
-const OpenAI = require("openai");
+import OpenAI from "openai";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const generateDailyInsights = async (natalChart, currentTransits) => {
+const generateDailyInsights = async (natalChart: any, currentTransits: any) => {
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -41,7 +41,7 @@ const generateDailyInsights = async (natalChart, currentTransits) => {
       temperature: 0.7,
     });
 
-    const parsedResponse = JSON.parse(response.choices[0].message.content);
+    const parsedResponse = JSON.parse(response.choices[0].message.content!);
 
     // Validate the response structure matches our interface
     const validatedResponse = {
@@ -74,7 +74,4 @@ const generateDailyInsights = async (natalChart, currentTransits) => {
   }
 };
 
-module.exports = {
-  generateDailyInsights,
-  openai,
-};
+export { generateDailyInsights, openai };
