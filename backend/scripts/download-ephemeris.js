@@ -1,6 +1,9 @@
-const fs = require("fs");
-const path = require("path");
-const { execSync } = require("child_process");
+import fs from "fs";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const REQUIRED_FILES = [
   "seas_18.se1", // Main asteroid file

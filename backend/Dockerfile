@@ -20,8 +20,8 @@ COPY scripts ./scripts
 RUN npm install --production --python=/usr/bin/python3
 RUN npm install -g ts-node typescript
 
-# Download ephemeris files
-RUN node scripts/download-ephemeris.js
+# Download ephemeris files (using node with --experimental-modules flag)
+RUN node --experimental-modules scripts/download-ephemeris.js
 
 # Copy the rest of the application
 COPY . .
