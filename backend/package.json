@@ -1,14 +1,15 @@
 {
   "name": "woowoo-backend",
   "version": "1.0.0",
+  "type": "module",
   "main": "dist/server.js",
   "scripts": {
-    "prestart": "node scripts/check-ephemeris.js",
+    "prestart": "node --loader ts-node/esm scripts/check-ephemeris.js",
     "start": "node --loader ts-node/esm src/server.ts",
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev": "ts-node-dev --esm --respawn --transpile-only src/server.ts",
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "node scripts/download-ephemeris.js",
+    "postinstall": "node --loader ts-node/esm scripts/download-ephemeris.js",
     "generate": "drizzle-kit generate",
     "push": "drizzle-kit push",
     "drop": "drizzle-kit drop",

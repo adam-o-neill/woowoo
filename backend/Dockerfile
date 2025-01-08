@@ -21,7 +21,7 @@ COPY scripts ./scripts
 RUN npm install --production --python=/usr/bin/python3
 RUN npm install -g typescript ts-node
 
-# Download ephemeris files
+# Download ephemeris files using ts-node/esm loader
 RUN node --loader ts-node/esm scripts/download-ephemeris.js
 
 # Copy the rest of the application
@@ -29,5 +29,5 @@ COPY . .
 
 EXPOSE 8080
 
-# Update the CMD to use the proper loader
+# Use ts-node with ESM loader
 CMD ["node", "--loader", "ts-node/esm", "src/server.ts"]
