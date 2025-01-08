@@ -26,4 +26,4 @@ RUN node scripts/download-ephemeris.js
 COPY . .
 
 EXPOSE 8080
-CMD ["node", "server.ts"]
+CMD ["node", "src/server.ts"]
