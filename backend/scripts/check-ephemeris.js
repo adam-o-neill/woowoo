@@ -1,5 +1,5 @@
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
 
 const REQUIRED_FILES = ["seas_18.se1", "semo_18.se1", "sepl_18.se1"];
 
