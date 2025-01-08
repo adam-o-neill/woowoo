@@ -2,6 +2,7 @@
   "name": "woowoo-backend",
   "version": "1.0.0",
   "main": "dist/server.js",
+  "type": "module",
   "scripts": {
     "prestart": "node scripts/check-ephemeris.js",
     "start": "node dist/server.ts",

@@ -18,6 +18,7 @@ COPY scripts ./scripts
 
 # Install dependencies with Python path specified
 RUN npm install --production --python=/usr/bin/python3
+RUN npm install -g ts-node typescript
 
 # Download ephemeris files
 RUN node scripts/download-ephemeris.js
@@ -26,4 +27,4 @@ RUN node scripts/download-ephemeris.js
 COPY . .
 
 EXPOSE 8080
-CMD ["node", "src/server.ts"]
+CMD ["ts-node", "--esm", "src/server.ts"]
