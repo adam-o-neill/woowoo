@@ -17,10 +17,31 @@ const geocodeWithGoogle = async (placeOfBirth: string) => {
     }
 
     const { lat, lng } = response.data.results[0].geometry.location;
+    const formattedAddress = response.data.results[0].formatted_address;
+
+    // Fetch timezone information
+    const timezoneResponse = await axios.get(
+      `https://maps.googleapis.com/maps/api/timezone/json`,
+      {
+        params: {
+          location: `${lat},${lng}`,
+          timestamp: Math.floor(Date.now() / 1000),
+          key: process.env.GOOGLE_MAPS_API_KEY,
+        },
+      }
+    );
+
+    if (timezoneResponse.data.status !== "OK") {
+      throw new Error("Timezone not found");
+    }
+
+    const timezone = timezoneResponse.data.timeZoneId;
+
     return {
       latitude: lat,
       longitude: lng,
-      formattedAddress: response.data.results[0].formatted_address,
+      formattedAddress,
+      timezone,
     };
   } catch (error) {
     console.error("Geocoding error:", error);

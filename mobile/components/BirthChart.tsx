@@ -9,10 +9,9 @@ import {
   Button,
   ActivityIndicator,
 } from "react-native";
-import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import { Section } from "./Section";
-import { useBirthChart } from "@/contexts/BirthChartContext";
-import { BirthInfo } from "@/lib/api/birthChart";
+import { useBirthChart } from "@/hooks/useBirthChart";
 
 // Add these symbol mappings at the top
 const planetSymbols: { [key: string]: string } = {
@@ -174,16 +173,25 @@ export function BirthChart() {
     );
   }
 
+  // Format the timestamp in UTC
+  const formattedUtcTime = formatInTimeZone(
+    new Date(chartData.timestamp),
+    "UTC",
+    "h:mm a"
+  );
+
+  const formattedUtcDate = formatInTimeZone(
+    new Date(chartData.timestamp),
+    "UTC",
+    "MMMM d, yyyy"
+  );
+
   return (
     <View style={styles.container}>
       <Section title="My Birth Chart" container>
         <Section title="Birth Details">
-          <Text style={styles.text}>
-            Date: {format(new Date(chartData.timestamp), "PPP")}
-          </Text>
-          <Text style={styles.text}>
-            Time: {format(new Date(chartData.timestamp), "p")}
-          </Text>
+          <Text style={styles.text}>Date: {formattedUtcDate}</Text>
+          <Text style={styles.text}>Time: {formattedUtcTime} UTC</Text>
           <Text style={styles.text}>Place: {chartData.location.place}</Text>
         </Section>
 
@@ -206,7 +214,7 @@ export function BirthChart() {
         </Section>
 
         <Section title="Planetary Positions">
-          {chartData.planets.map((planet) => {
+          {chartData.planets.map((planet: any) => {
             const position = getZodiacPosition(planet.longitude);
             return (
               <View key={planet.name} style={styles.planetRow}>
@@ -225,7 +233,7 @@ export function BirthChart() {
 
         <Section title="House Cusps">
           {chartData.houses &&
-            chartData.houses.map((cusp, index) => {
+            chartData.houses.map((cusp: any, index: any) => {
               const position = getZodiacPosition(cusp);
               return (
                 <Text key={index} style={styles.text}>
@@ -239,7 +247,7 @@ export function BirthChart() {
 
         {chartData.aspects && (
           <Section title="Major Aspects">
-            {chartData.aspects.map((aspect, index) => (
+            {chartData.aspects.map((aspect: any, index: any) => (
               <Text key={index} style={styles.text}>
                 {aspect}
               </Text>

@@ -8,7 +8,6 @@ import "react-native-reanimated";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { BirthChartProvider } from "@/contexts/BirthChartContext";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -101,12 +100,10 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <BirthChartProvider>
-          <ThemeProvider value={CustomDarkTheme}>
-            <AppNavigator />
-            <StatusBar style="light" />
-          </ThemeProvider>
-        </BirthChartProvider>
+        <ThemeProvider value={CustomDarkTheme}>
+          <AppNavigator />
+          <StatusBar style="light" />
+        </ThemeProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

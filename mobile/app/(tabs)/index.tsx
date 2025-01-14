@@ -4,15 +4,17 @@ import { format } from "date-fns";
 import { DailyDashboard } from "@/components/DailyDashboard";
 import { BirthChart } from "@/components/BirthChart";
 import { ScenarioList } from "../../components/ScenarioList";
+import { useBirthChart } from "@/hooks/useBirthChart";
 
 const HomeScreen = () => {
+  const { birthInfo } = useBirthChart();
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.date}>
         {format(new Date(), "EEEE, MMMM d, yyyy")}
       </Text>
       <DailyDashboard />
-      <ScenarioList />
+      {birthInfo && birthInfo.id && <ScenarioList />}
       <BirthChart />
     </ScrollView>
   );

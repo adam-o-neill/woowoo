@@ -86,9 +86,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.adon94.woowoomob'
+    namespace 'com.adon94.woowooapp'
     defaultConfig {
-        applicationId 'com.adon94.woowoomob'
+        applicationId 'com.adon94.woowooapp'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

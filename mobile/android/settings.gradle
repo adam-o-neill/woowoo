@@ -21,7 +21,7 @@ extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
   }
 }
 
-rootProject.name = 'woowoo-mob'
+rootProject.name = 'woowoo-app'
 
 dependencyResolutionManagement {
   versionCatalogs {

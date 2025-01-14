@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "woowoo-mob",
-    "slug": "woowoo-mob",
+    "name": "woowoo-app",
+    "slug": "woowoo-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.adon94.woowoo-mob",
+      "bundleIdentifier": "com.adon94.woowoo-app",
       "splash": {
         "image": "./assets/images/splash-icon.png",
         "resizeMode": "contain",
@@ -22,7 +22,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.adon94.woowoomob"
+      "package": "com.adon94.woowooapp"
     },
     "web": {
       "bundler": "metro",

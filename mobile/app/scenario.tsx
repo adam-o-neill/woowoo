@@ -12,8 +12,9 @@ import { useQuery } from "@tanstack/react-query";
 import Markdown from "react-native-markdown-display";
 import { scenarioAPI } from "@/lib/api/scenario";
 import { useAuth } from "@/contexts/AuthContext";
-import { useBirthChart } from "@/contexts/BirthChartContext";
+
 import { scenarios } from "@/data/scenarios";
+import { useBirthChart } from "@/hooks/useBirthChart";
 
 export default function ScenarioScreen() {
   const router = useRouter();

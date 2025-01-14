@@ -1,4 +1,4 @@
-package com.adon94.woowoomob
+package com.adon94.woowooapp
 
 import android.app.Application
 import android.content.res.Configuration

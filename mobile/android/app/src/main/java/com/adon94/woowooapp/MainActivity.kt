@@ -1,4 +1,4 @@
-package com.adon94.woowoomob
+package com.adon94.woowooapp
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

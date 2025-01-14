@@ -25,8 +25,8 @@
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="myapp"/>
-        <data android:scheme="com.adon94.woowoomob"/>
-        <data android:scheme="exp+woowoo-mob"/>
+        <data android:scheme="com.adon94.woowooapp"/>
+        <data android:scheme="exp+woowoo-app"/>
       </intent-filter>
     </activity>
   </application>

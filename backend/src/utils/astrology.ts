@@ -7,6 +7,7 @@ import {
   Transits,
   AstrologicalEvent,
 } from "../constants/types";
+import moment from "moment-timezone";
 
 sweph.set_ephe_path("./ephemeris_files");
 
@@ -439,31 +440,28 @@ const calculateAspects = (planets: PlanetPosition[]) => {
 };
 
 const calculateBirthChart = async (
-  dateOfBirth: string,
-  timeOfBirth: string,
-  placeOfBirth: string
+  dateTime: string,
+  latitude: number,
+  longitude: number,
+  place: string
 ) => {
   try {
-    const location = await geocode(placeOfBirth);
-
-    // Parse the date and time
-    const [hours, minutes] = timeOfBirth.split(":").map(Number);
-    const birthDate = new Date(dateOfBirth);
-    birthDate.setUTCHours(hours, minutes, 0, 0); // Use UTC time
+    // Parse the date and time using moment-timezone
+    const birthMoment = moment.tz(dateTime, place);
 
     // Calculate Julian date
     const jd = sweph.julday(
-      birthDate.getUTCFullYear(),
-      birthDate.getUTCMonth() + 1,
-      birthDate.getUTCDate(),
-      birthDate.getUTCHours() + birthDate.getUTCMinutes() / 60.0,
+      birthMoment.year(),
+      birthMoment.month() + 1,
+      birthMoment.date(),
+      birthMoment.hour() + birthMoment.minute() / 60.0,
       sweph.constants.SE_GREG_CAL
     );
 
     // Calculate planet positions
     const planetPositions = planets.map((planet) => {
       const position = calculatePlanetPosition(
-        birthDate,
+        birthMoment.toDate(),
         planet.id,
         planet.name
       );
@@ -477,21 +475,17 @@ const calculateBirthChart = async (
     });
 
     // Calculate houses using the correct coordinates
-    const houseData = calculateHouses(
-      jd,
-      location.latitude,
-      location.longitude
-    );
+    const houseData = calculateHouses(jd, latitude, longitude);
 
     // Calculate aspects
     const aspects = calculateAspects(planetPositions);
 
     return {
-      timestamp: birthDate.toISOString(),
+      timestamp: birthMoment.toISOString(),
       location: {
-        latitude: location.latitude,
-        longitude: location.longitude,
-        place: location.formattedAddress || placeOfBirth,
+        latitude,
+        longitude,
+        place,
       },
       houses: houseData.cusps,
       ascendant: houseData.angles.ascendant,

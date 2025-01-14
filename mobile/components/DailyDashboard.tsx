@@ -46,6 +46,8 @@ export function DailyDashboard() {
         session?.access_token || ""
       );
 
+      console.log(response);
+
       // Update cache with new data
       cached[today] = response.insights;
       await AsyncStorage.setItem("dailyDashboard", JSON.stringify(cached));
