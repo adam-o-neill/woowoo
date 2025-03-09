@@ -29,15 +29,21 @@ router.get("/daily-dashboard", authenticateUser, async (req: any, res: any) => {
       .where(eq(birthChart.birthInfoId, userBirthInfo[0].id))
       .limit(1);
 
+    if (!userBirthChart || userBirthChart.length === 0) {
+      return res.status(404).json({ message: "Birth chart not found" });
+    }
+
+    const chartData = userBirthChart[0].chartData;
+
     // Calculate current transits
     const currentTransits = await calculateCurrentTransits(
       new Date(),
-      userBirthChart[0].chartData
+      chartData
     );
 
     // Generate personalized insights using OpenAI
     const dailyInsights = await generateDailyInsights(
-      userBirthChart[0].chartData,
+      chartData,
       currentTransits
     );
 
