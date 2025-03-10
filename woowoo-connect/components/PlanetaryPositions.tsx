@@ -93,7 +93,6 @@ const styles = StyleSheet.create({
   titleText: {
     fontSize: 16,
     color: "#fff",
-    fontFamily: "SpaceMono",
   },
   container: {
     paddingVertical: 10,

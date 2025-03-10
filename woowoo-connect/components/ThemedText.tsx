@@ -1,34 +1,39 @@
-import { Text, type TextProps, StyleSheet } from 'react-native';
-
-import { useThemeColor } from '@/hooks/useThemeColor';
+import React from "react";
+import { Text, TextProps, StyleSheet } from "react-native";
+import { useThemeColor } from "@/hooks/useThemeColor";
+import { Typography } from "@/constants/Typography";
+import { Colors } from "@/constants/Colors";
 
 export type ThemedTextProps = TextProps & {
+  variant?: keyof typeof Typography;
+  color?: keyof typeof Colors.light | keyof typeof Colors.dark;
+  align?: "auto" | "left" | "right" | "center" | "justify";
   lightColor?: string;
   darkColor?: string;
-  type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
 };
 
 export function ThemedText({
   style,
   lightColor,
   darkColor,
-  type = 'default',
-  ...rest
+  variant = "bodyMedium",
+  color = "text",
+  align = "left",
+  ...otherProps
 }: ThemedTextProps) {
-  const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
+  const textColor = useThemeColor(
+    { light: lightColor, dark: darkColor },
+    color as any
+  );
 
   return (
     <Text
       style={[
-        { color },
-        type === 'default' ? styles.default : undefined,
-        type === 'title' ? styles.title : undefined,
-        type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
-        type === 'subtitle' ? styles.subtitle : undefined,
-        type === 'link' ? styles.link : undefined,
+        Typography[variant],
+        { color: textColor, textAlign: align },
         style,
       ]}
-      {...rest}
+      {...otherProps}
     />
   );
 }
@@ -41,20 +46,20 @@ const styles = StyleSheet.create({
   defaultSemiBold: {
     fontSize: 16,
     lineHeight: 24,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     lineHeight: 32,
   },
   subtitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   link: {
     lineHeight: 30,
     fontSize: 16,
-    color: '#0a7ea4',
+    color: "#0a7ea4",
   },
 });

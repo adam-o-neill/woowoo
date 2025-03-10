@@ -11,11 +11,15 @@ import {
   FlatList,
   Dimensions,
   SafeAreaView,
-  StatusBar,
+  Keyboard,
+  InputAccessoryView,
 } from "react-native";
 import { format } from "date-fns";
-import { Section } from "./Section";
 import { useRouter } from "expo-router";
+import { useTheme } from "@/contexts/ThemeContext";
+import { ThemedText } from "./ThemedText";
+import { ThemedView } from "./ThemedView";
+import { ThemedButton } from "./ThemedButton";
 
 interface BirthInfoInputsProps {
   onSubmit: (birthInfo: {
@@ -57,6 +61,7 @@ export function BirthInfoForm({ onSubmit, loading }: BirthInfoInputsProps) {
   const router = useRouter();
   const scrollViewRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
+  const { colors, spacing, borderRadius } = useTheme();
 
   // Main form state
   const [month, setMonth] = useState(new Date().getMonth());
@@ -71,6 +76,9 @@ export function BirthInfoForm({ onSubmit, loading }: BirthInfoInputsProps) {
   const [activeSelector, setActiveSelector] = useState<string | null>(null);
   const [focusedInput, setFocusedInput] = useState(false);
 
+  // Add this constant for the input accessory view ID
+  const inputAccessoryViewID = "birthInfoDone";
+
   // Calculate max days for selected month/year
   const getMaxDays = () => {
     return new Date(year, month + 1, 0).getDate();
@@ -83,6 +91,23 @@ export function BirthInfoForm({ onSubmit, loading }: BirthInfoInputsProps) {
       setDay(maxDays);
     }
   }, [month, year]);
+
+  // Add this effect to handle keyboard appearance
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      "keyboardDidShow",
+      () => {
+        // Delay the scroll slightly to ensure the keyboard is fully shown
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      }
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+    };
+  }, []);
 
   const handleSubmit = async () => {
     try {
@@ -151,18 +176,39 @@ export function BirthInfoForm({ onSubmit, loading }: BirthInfoInputsProps) {
     return (
       <View style={styles.selectorOverlay}>
         <TouchableOpacity
-          style={styles.selectorBackground}
+          style={[
+            styles.selectorBackground,
+            { backgroundColor: colors.overlay },
+          ]}
           activeOpacity={1}
           onPress={() => setActiveSelector(null)}
         />
-        <View style={styles.selectorContainer}>
-          <View style={styles.selectorHeader}>
-            <Text style={styles.selectorTitle}>Select {activeSelector}</Text>
+        <ThemedView
+          variant="card"
+          style={[
+            styles.selectorContainer,
+            {
+              borderTopLeftRadius: borderRadius.lg,
+              borderTopRightRadius: borderRadius.lg,
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.selectorHeader,
+              { borderBottomColor: colors.border },
+            ]}
+          >
+            <ThemedText variant="headingSmall" style={styles.selectorTitle}>
+              Select {activeSelector}
+            </ThemedText>
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => setActiveSelector(null)}
             >
-              <Text style={styles.closeButtonText}>Done</Text>
+              <ThemedText variant="labelLarge" color="primary">
+                Done
+              </ThemedText>
             </TouchableOpacity>
           </View>
 
@@ -180,206 +226,290 @@ export function BirthInfoForm({ onSubmit, loading }: BirthInfoInputsProps) {
               <TouchableOpacity
                 style={[
                   styles.selectorItem,
-                  index === currentValue && styles.selectorItemSelected,
+                  index === currentValue && [
+                    styles.selectorItemSelected,
+                    { backgroundColor: colors.backgroundSecondary },
+                  ],
                 ]}
                 onPress={() => {
                   setFunction(index);
                   setActiveSelector(null);
                 }}
               >
-                <Text
-                  style={[
-                    styles.selectorItemText,
-                    index === currentValue && styles.selectorItemTextSelected,
-                  ]}
+                <ThemedText
+                  variant="bodyLarge"
+                  color={index === currentValue ? "primary" : "text"}
+                  style={index === currentValue && { fontWeight: "bold" }}
                 >
                   {item}
-                </Text>
+                </ThemedText>
               </TouchableOpacity>
             )}
           />
-        </View>
+        </ThemedView>
       </View>
     );
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: colors.background }]}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.container}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 20}
+        style={[styles.container, { backgroundColor: colors.background }]}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
       >
-        <View style={styles.header}>
+        <View style={styles.headerContainer}>
           <TouchableOpacity
-            style={styles.backButton}
             onPress={() => router.back()}
+            style={styles.backButton}
           >
-            <Text style={styles.backButtonText}>Cancel</Text>
+            <ThemedText variant="labelLarge" color="primary">
+              Back
+            </ThemedText>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Birth Details</Text>
-          <TouchableOpacity
-            style={[
-              styles.submitButtonSmall,
-              loading && styles.submitButtonDisabled,
-            ]}
-            onPress={handleSubmit}
-            disabled={loading}
+          <ThemedText variant="headingMedium">Birth Details</ThemedText>
+          <View style={styles.backButton} />
+        </View>
+
+        <View style={styles.promptContainer}>
+          <ThemedView
+            variant="card"
+            style={[styles.promptBox, { borderColor: colors.border }]}
           >
-            <Text style={styles.submitButtonText}>
-              {loading ? "Saving..." : "Save"}
-            </Text>
-          </TouchableOpacity>
+            <ThemedText variant="bodySmall" align="center">
+              Enter your birth details to create your personalized experience
+            </ThemedText>
+          </ThemedView>
         </View>
 
         <ScrollView
           ref={scrollViewRef}
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          style={styles.scrollContainer}
+          contentContainerStyle={styles.formContainer}
           keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
         >
-          <View style={styles.formContainer}>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Date of Birth</Text>
-              <Text style={styles.sectionSubtitle}>When were you born?</Text>
-              <View style={styles.dateContainer}>
-                <TouchableOpacity
-                  style={styles.dateField}
-                  onPress={() => {
-                    if (focusedInput) {
-                      inputRef.current?.blur();
-                      setFocusedInput(false);
-                    }
-                    setActiveSelector("month");
-                  }}
-                >
-                  <Text style={styles.dateFieldText}>{MONTHS[month]}</Text>
-                </TouchableOpacity>
+          <View style={styles.sectionContainer}>
+            <ThemedText
+              variant="headingSmall"
+              style={{ marginBottom: spacing.xs }}
+            >
+              Date of Birth
+            </ThemedText>
+            <ThemedText
+              variant="bodySmall"
+              color="textSecondary"
+              style={{ marginBottom: spacing.md }}
+            >
+              Please select your birth date
+            </ThemedText>
 
-                <TouchableOpacity
-                  style={styles.dateField}
-                  onPress={() => {
-                    if (focusedInput) {
-                      inputRef.current?.blur();
-                      setFocusedInput(false);
-                    }
-                    setActiveSelector("day");
-                  }}
-                >
-                  <Text style={styles.dateFieldText}>{day}</Text>
-                </TouchableOpacity>
+            <View style={styles.dateContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.dateField,
+                  {
+                    borderColor: colors.border,
+                    borderRadius: borderRadius.md,
+                    marginHorizontal: spacing.xs,
+                  },
+                ]}
+                onPress={() => setActiveSelector("month")}
+              >
+                <ThemedText variant="bodyMedium">{MONTHS[month]}</ThemedText>
+              </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.dateField}
-                  onPress={() => {
-                    if (focusedInput) {
-                      inputRef.current?.blur();
-                      setFocusedInput(false);
-                    }
-                    setActiveSelector("year");
-                  }}
-                >
-                  <Text style={styles.dateFieldText}>{year}</Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                style={[
+                  styles.dateField,
+                  {
+                    borderColor: colors.border,
+                    borderRadius: borderRadius.md,
+                    marginHorizontal: spacing.xs,
+                  },
+                ]}
+                onPress={() => setActiveSelector("day")}
+              >
+                <ThemedText variant="bodyMedium">{day}</ThemedText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.dateField,
+                  {
+                    borderColor: colors.border,
+                    borderRadius: borderRadius.md,
+                    marginHorizontal: spacing.xs,
+                  },
+                ]}
+                onPress={() => setActiveSelector("year")}
+              >
+                <ThemedText variant="bodyMedium">{year}</ThemedText>
+              </TouchableOpacity>
             </View>
-
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Time of Birth</Text>
-              <Text style={styles.sectionSubtitle}>
-                What time were you born?
-              </Text>
-              <View style={styles.timeContainer}>
-                <TouchableOpacity
-                  style={styles.timeField}
-                  onPress={() => {
-                    if (focusedInput) {
-                      inputRef.current?.blur();
-                      setFocusedInput(false);
-                    }
-                    setActiveSelector("hour");
-                  }}
-                >
-                  <Text style={styles.timeFieldText}>{hour}</Text>
-                </TouchableOpacity>
-
-                <Text style={styles.timeSeparator}>:</Text>
-
-                <TouchableOpacity
-                  style={styles.timeField}
-                  onPress={() => {
-                    if (focusedInput) {
-                      inputRef.current?.blur();
-                      setFocusedInput(false);
-                    }
-                    setActiveSelector("minute");
-                  }}
-                >
-                  <Text style={styles.timeFieldText}>
-                    {String(minute).padStart(2, "0")}
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.ampmField}
-                  onPress={() => {
-                    if (focusedInput) {
-                      inputRef.current?.blur();
-                      setFocusedInput(false);
-                    }
-                    setActiveSelector("ampm");
-                  }}
-                >
-                  <Text style={styles.ampmFieldText}>{ampm}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Place of Birth</Text>
-              <Text style={styles.sectionSubtitle}>Where were you born?</Text>
-              <TextInput
-                ref={inputRef}
-                style={styles.input}
-                placeholder="City, State/Province, Country"
-                placeholderTextColor="#666"
-                value={placeOfBirth}
-                onChangeText={setPlaceOfBirth}
-                onFocus={() => {
-                  setFocusedInput(true);
-                  setActiveSelector(null);
-                  // Scroll to make input visible when keyboard appears
-                  setTimeout(() => {
-                    scrollViewRef.current?.scrollToEnd({ animated: true });
-                  }, 100);
-                }}
-                onBlur={() => setFocusedInput(false)}
-              />
-            </View>
-
-            {/* Extra padding at bottom for keyboard */}
-            <View style={styles.bottomPadding} />
           </View>
+
+          <View style={styles.sectionContainer}>
+            <ThemedText
+              variant="headingSmall"
+              style={{ marginBottom: spacing.xs }}
+            >
+              Time of Birth
+            </ThemedText>
+            <ThemedText
+              variant="bodySmall"
+              color="textSecondary"
+              style={{ marginBottom: spacing.md }}
+            >
+              Select your birth time (if known)
+            </ThemedText>
+
+            <View style={styles.timeContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.timeField,
+                  {
+                    borderColor: colors.border,
+                    borderRadius: borderRadius.md,
+                  },
+                ]}
+                onPress={() => setActiveSelector("hour")}
+              >
+                <ThemedText variant="bodyMedium">{hour}</ThemedText>
+              </TouchableOpacity>
+
+              <ThemedText variant="displaySmall" style={styles.timeSeparator}>
+                :
+              </ThemedText>
+
+              <TouchableOpacity
+                style={[
+                  styles.timeField,
+                  {
+                    borderColor: colors.border,
+                    borderRadius: borderRadius.md,
+                  },
+                ]}
+                onPress={() => setActiveSelector("minute")}
+              >
+                <ThemedText variant="bodyMedium">
+                  {String(minute).padStart(2, "0")}
+                </ThemedText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.ampmField,
+                  {
+                    borderColor: colors.border,
+                    borderRadius: borderRadius.md,
+                    marginLeft: spacing.md,
+                  },
+                ]}
+                onPress={() => setActiveSelector("ampm")}
+              >
+                <ThemedText variant="bodyMedium">{ampm}</ThemedText>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={styles.sectionContainer}>
+            <ThemedText
+              variant="headingSmall"
+              style={{ marginBottom: spacing.xs }}
+            >
+              Place of Birth
+            </ThemedText>
+            <ThemedText
+              variant="bodySmall"
+              color="textSecondary"
+              style={{ marginBottom: spacing.md }}
+            >
+              Please enter your birth location
+            </ThemedText>
+
+            <TextInput
+              ref={inputRef}
+              style={[
+                styles.input,
+                {
+                  borderColor: focusedInput
+                    ? colors.inputFocusBorder
+                    : colors.inputBorder,
+                  backgroundColor: colors.inputBackground,
+                  color: colors.inputText,
+                  borderRadius: borderRadius.md,
+                },
+              ]}
+              placeholder="City, State/Province, Country"
+              placeholderTextColor={colors.inputPlaceholder}
+              value={placeOfBirth}
+              onChangeText={setPlaceOfBirth}
+              onFocus={() => {
+                setFocusedInput(true);
+                setTimeout(() => {
+                  scrollViewRef.current?.scrollToEnd({ animated: true });
+                }, 100);
+              }}
+              onBlur={() => setFocusedInput(false)}
+              inputAccessoryViewID={
+                Platform.OS === "ios" ? inputAccessoryViewID : undefined
+              }
+            />
+          </View>
+
+          {/* Add the InputAccessoryView for iOS */}
+          {Platform.OS === "ios" && (
+            <InputAccessoryView nativeID={inputAccessoryViewID}>
+              <View
+                style={[
+                  styles.inputAccessory,
+                  {
+                    backgroundColor: colors.backgroundSecondary,
+                    borderTopColor: colors.border,
+                  },
+                ]}
+              >
+                <TouchableOpacity
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setFocusedInput(false);
+                  }}
+                  style={styles.doneButton}
+                >
+                  <ThemedText variant="labelLarge" color="primary">
+                    Done
+                  </ThemedText>
+                </TouchableOpacity>
+              </View>
+            </InputAccessoryView>
+          )}
+
+          <View style={styles.bottomPadding} />
         </ScrollView>
 
-        {/* Fixed submit button for when user scrolls down */}
-        {!activeSelector && !focusedInput && (
-          <View style={styles.fixedButtonContainer}>
-            <TouchableOpacity
-              style={[
-                styles.submitButton,
-                loading && styles.submitButtonDisabled,
-              ]}
-              onPress={handleSubmit}
-              disabled={loading}
-            >
-              <Text style={styles.submitButtonText}>
-                {loading ? "Saving..." : "Save Birth Information"}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        <View
+          style={[
+            styles.fixedButtonContainer,
+            {
+              backgroundColor: colors.background,
+              shadowColor: colors.shadow,
+              shadowOffset: { width: 0, height: -3 },
+              shadowOpacity: 0.1,
+              shadowRadius: 5,
+              elevation: 5,
+            },
+          ]}
+        >
+          <ThemedButton
+            title="Save Birth Details"
+            variant="primary"
+            onPress={handleSubmit}
+            loading={loading}
+            disabled={!placeOfBirth.trim()}
+          />
+        </View>
 
         {renderSelector()}
       </KeyboardAvoidingView>
@@ -398,14 +528,11 @@ export function BirthInfoInputs({ onSubmit, loading }: BirthInfoInputsProps) {
 
   return (
     <View style={styles.promptContainer}>
-      <TouchableOpacity
-        style={styles.promptButton}
+      <ThemedButton
         onPress={navigateToBirthForm}
-      >
-        <Text style={styles.promptText}>
-          ✨ Add your birth details for personal insights
-        </Text>
-      </TouchableOpacity>
+        title="Add your birth details for personal insights"
+        variant="primary"
+      />
     </View>
   );
 }
@@ -415,77 +542,38 @@ const { width, height } = Dimensions.get("window");
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#000",
   },
   container: {
     flex: 1,
-    backgroundColor: "#000",
   },
-  promptContainer: {
-    paddingVertical: 16,
-  },
-  promptButton: {
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#333",
-    borderRadius: 8,
-    backgroundColor: "#111",
-  },
-  promptText: {
-    color: "#fff",
-    textAlign: "center",
-    fontFamily: "SpaceMono",
-    fontSize: 14,
-  },
-  header: {
+  headerContainer: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingTop: 16,
     paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#222",
-    backgroundColor: "#111",
-  },
-  headerTitle: {
-    color: "#fff",
-    fontSize: 18,
-    fontFamily: "SpaceMono",
-    fontWeight: "bold",
   },
   backButton: {
-    padding: 8,
+    width: 80,
   },
-  backButtonText: {
-    color: "#4a7dff",
-    fontFamily: "SpaceMono",
-    fontSize: 16,
+  promptContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 16,
   },
-  scrollView: {
+  promptBox: {
+    padding: 12,
+    borderWidth: 1,
+    borderRadius: 8,
+  },
+  scrollContainer: {
     flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 30,
   },
   formContainer: {
     padding: 20,
   },
   sectionContainer: {
     marginBottom: 30,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    color: "#fff",
-    fontFamily: "SpaceMono",
-    fontWeight: "bold",
-    marginBottom: 8,
-  },
-  sectionSubtitle: {
-    fontSize: 16,
-    color: "#999",
-    fontFamily: "SpaceMono",
-    marginBottom: 16,
   },
   dateContainer: {
     flexDirection: "row",
@@ -494,18 +582,9 @@ const styles = StyleSheet.create({
   dateField: {
     flex: 1,
     height: 55,
-    borderColor: "#333",
     borderWidth: 1,
-    marginHorizontal: 4,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#111",
-    borderRadius: 8,
-  },
-  dateFieldText: {
-    color: "#fff",
-    fontFamily: "SpaceMono",
-    fontSize: 16,
   },
   timeContainer: {
     flexDirection: "row",
@@ -515,53 +594,28 @@ const styles = StyleSheet.create({
   timeField: {
     width: 70,
     height: 55,
-    borderColor: "#333",
     borderWidth: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#111",
-    borderRadius: 8,
-  },
-  timeFieldText: {
-    color: "#fff",
-    fontFamily: "SpaceMono",
-    fontSize: 16,
   },
   timeSeparator: {
-    color: "#fff",
-    fontFamily: "SpaceMono",
-    fontSize: 24,
     marginHorizontal: 8,
   },
   ampmField: {
     width: 70,
     height: 55,
-    borderColor: "#333",
     borderWidth: 1,
-    marginLeft: 16,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#111",
-    borderRadius: 8,
-  },
-  ampmFieldText: {
-    color: "#fff",
-    fontFamily: "SpaceMono",
-    fontSize: 16,
   },
   input: {
     height: 55,
-    borderColor: "#333",
     borderWidth: 1,
     paddingHorizontal: 16,
-    color: "#fff",
-    backgroundColor: "#111",
-    borderRadius: 8,
-    fontFamily: "SpaceMono",
     fontSize: 16,
   },
   bottomPadding: {
-    height: 100, // Extra space at bottom for keyboard
+    height: 100,
   },
   fixedButtonContainer: {
     position: "absolute",
@@ -569,31 +623,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: 16,
-    backgroundColor: "rgba(0, 0, 0, 0.8)",
-    borderTopWidth: 1,
-    borderTopColor: "#222",
-  },
-  submitButtonSmall: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 6,
-    backgroundColor: "#4a7dff",
-  },
-  submitButton: {
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    backgroundColor: "#4a7dff",
-    alignItems: "center",
-  },
-  submitButtonDisabled: {
-    backgroundColor: "#2c4580",
-  },
-  submitButtonText: {
-    color: "#fff",
-    fontFamily: "SpaceMono",
-    fontSize: 16,
-    fontWeight: "bold",
   },
   selectorOverlay: {
     position: "absolute",
@@ -610,14 +639,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
   },
   selectorContainer: {
-    backgroundColor: "#111",
-    borderTopWidth: 1,
-    borderTopColor: "#333",
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
     height: 350,
   },
   selectorHeader: {
@@ -626,21 +649,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#333",
   },
   selectorTitle: {
-    color: "#fff",
-    fontFamily: "SpaceMono",
-    fontSize: 18,
     textTransform: "capitalize",
   },
   closeButton: {
     padding: 8,
-  },
-  closeButtonText: {
-    color: "#4a7dff",
-    fontFamily: "SpaceMono",
-    fontSize: 16,
   },
   selectorList: {
     flex: 1,
@@ -652,16 +666,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 12,
   },
-  selectorItemSelected: {
-    backgroundColor: "#1a2446",
+  selectorItemSelected: {},
+  inputAccessory: {
+    width: "100%",
+    height: 44,
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    borderTopWidth: 1,
   },
-  selectorItemText: {
-    color: "#fff",
-    fontFamily: "SpaceMono",
-    fontSize: 18,
-  },
-  selectorItemTextSelected: {
-    color: "#4a7dff",
-    fontWeight: "bold",
+  doneButton: {
+    marginRight: 16,
+    padding: 8,
   },
 });

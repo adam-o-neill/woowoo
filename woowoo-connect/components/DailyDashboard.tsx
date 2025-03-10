@@ -4,6 +4,9 @@ import { apiClient } from "../lib/api/client";
 import { useAuth } from "@/contexts/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Section } from "./Section";
+import { useTheme } from "@/contexts/ThemeContext";
+import { ThemedText } from "./ThemedText";
+import { ThemedView } from "./ThemedView";
 
 interface DailyInsights {
   daily_horoscope: string;
@@ -22,6 +25,7 @@ export function DailyDashboard() {
   const [insights, setInsights] = useState<DailyInsights | null>(null);
   const [loading, setLoading] = useState(true);
   const { session } = useAuth();
+  const { colors, spacing } = useTheme();
 
   const fetchDailyInsights = async () => {
     try {
@@ -104,71 +108,75 @@ export function DailyDashboard() {
   }
 
   return (
-    <View style={styles.container}>
-      {insights && (
-        <>
-          <Section title="Daily Horoscope">
-            <Text style={styles.text}>{insights.daily_horoscope}</Text>
-          </Section>
+    <ThemedView>
+      <ThemedText
+        variant="headingMedium"
+        color="primary"
+        style={{ marginBottom: 16 }}
+      >
+        Today
+      </ThemedText>
 
-          <Section title="Emotional Forecast">
-            <View style={styles.moodContainer}>
-              <Text style={styles.emoji}>
-                {insights.emotional_forecast.emoji}
-              </Text>
-              <Text style={styles.text}>
-                {insights.emotional_forecast.insight}
-              </Text>
-            </View>
-          </Section>
+      <View>
+        {insights && (
+          <>
+            <Section title="Daily Horoscope">
+              <ThemedText variant="bodyMedium">
+                {insights.daily_horoscope}
+              </ThemedText>
+            </Section>
 
-          <Section title="Moon Phase">
-            <Text style={styles.moonPhase}>
-              {insights.moon_phase_insights.phase}
-            </Text>
-            <Text style={styles.text}>
-              {insights.moon_phase_insights.insight}
-            </Text>
-          </Section>
-
-          <Section title="Daily Quest">
-            {insights.daily_quests.map((quest, index) => (
-              <View key={index} style={styles.activityItem}>
-                <Text style={styles.bullet}>•</Text>
-                <Text style={styles.text}>{quest}</Text>
+            <Section title="Emotional Forecast">
+              <View style={styles.moodContainer}>
+                <ThemedText variant="displaySmall" style={{ marginBottom: 8 }}>
+                  {insights.emotional_forecast.emoji}
+                </ThemedText>
+                <ThemedText variant="bodyMedium">
+                  {insights.emotional_forecast.insight}
+                </ThemedText>
               </View>
-            ))}
-          </Section>
-        </>
-      )}
-    </View>
+            </Section>
+
+            <Section title="Moon Phase">
+              <ThemedText variant="labelLarge" style={{ marginBottom: 8 }}>
+                {insights.moon_phase_insights.phase}
+              </ThemedText>
+              <ThemedText variant="bodyMedium">
+                {insights.moon_phase_insights.insight}
+              </ThemedText>
+            </Section>
+          </>
+        )}
+
+        {loading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#fff" />
+          </View>
+        )}
+      </View>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#000",
-    paddingTop: 16,
-    gap: 16,
+    marginHorizontal: 4,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#000",
   },
   errorContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#000",
     padding: 16,
   },
   errorText: {
     color: "#ff4444",
     fontSize: 16,
     textAlign: "center",
-    fontFamily: "SpaceMono",
   },
   section: {
     borderRadius: 12,
@@ -181,14 +189,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: "#fff",
     fontSize: 18,
-    fontFamily: "SpaceMono",
     marginBottom: 12,
     fontWeight: "bold",
   },
   text: {
     color: "#fff",
     fontSize: 16,
-    fontFamily: "SpaceMono",
     lineHeight: 24,
   },
   moodContainer: {
@@ -202,7 +208,6 @@ const styles = StyleSheet.create({
   moonPhase: {
     color: "#fff",
     fontSize: 16,
-    fontFamily: "SpaceMono",
     marginBottom: 8,
   },
   activityItem: {
@@ -213,6 +218,5 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     marginRight: 8,
-    fontFamily: "SpaceMono",
   },
 });

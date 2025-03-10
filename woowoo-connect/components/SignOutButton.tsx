@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
   },
   text: {
     color: "#fff",
-    fontFamily: "SpaceMono",
+
     fontSize: 14,
   },
 });

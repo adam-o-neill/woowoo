@@ -91,7 +91,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: "center",
     color: "#fff",
-    fontFamily: "SpaceMono",
   },
   phoneContainer: {
     flexDirection: "row",
@@ -103,7 +102,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginRight: 8,
     marginTop: 7,
-    fontFamily: "SpaceMono",
   },
   input: {
     height: 40,
@@ -114,14 +112,13 @@ const styles = StyleSheet.create({
     color: "#fff",
     backgroundColor: "#111",
     borderRadius: 4,
-    fontFamily: "SpaceMono",
+
     marginBottom: 12,
   },
   error: {
     color: "#ff4444",
     marginBottom: 12,
     textAlign: "center",
-    fontFamily: "SpaceMono",
   },
   switchButton: {
     marginTop: 16,
@@ -131,7 +128,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     textDecorationLine: "underline",
     textAlign: "center",
-    fontFamily: "SpaceMono",
   },
 });
 

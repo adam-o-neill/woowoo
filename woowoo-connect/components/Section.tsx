@@ -1,37 +1,43 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { useTheme } from "@/contexts/ThemeContext";
+import { ThemedText } from "./ThemedText";
+import { ThemedView } from "./ThemedView";
 
-export function Section({
-  title,
-  container,
-  children,
-}: {
-  title?: string;
-  container?: boolean;
+interface SectionProps {
+  title: string;
   children: React.ReactNode;
-}) {
+}
+
+export function Section({ title, children }: SectionProps) {
+  const { colors, spacing, borderRadius } = useTheme();
+
   return (
-    <View style={[styles.section, container && { gap: 16 }]}>
-      {title && <Text style={styles.sectionTitle}>{title}</Text>}
+    <ThemedView
+      variant="card"
+      style={[
+        styles.section,
+        {
+          marginBottom: spacing.md,
+          borderRadius: borderRadius.md,
+          borderColor: colors.border,
+        },
+      ]}
+    >
+      <ThemedText
+        variant="headingSmall"
+        color="primary"
+        style={{ marginBottom: spacing.sm }}
+      >
+        {title}
+      </ThemedText>
       {children}
-    </View>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
   section: {
-    borderRadius: 12,
     padding: 16,
-    backgroundColor: "#111",
-    borderWidth: 1,
-    borderColor: "#333",
-    color: "#fff",
-  },
-  sectionTitle: {
-    color: "#fff",
-    fontSize: 18,
-    fontFamily: "SpaceMono",
-    marginBottom: 12,
-    fontWeight: "bold",
   },
 });

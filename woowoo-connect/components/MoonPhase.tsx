@@ -89,24 +89,24 @@ const styles = StyleSheet.create({
   phaseName: {
     color: "#fff",
     fontSize: 18,
-    fontFamily: "SpaceMono",
+
     fontWeight: "bold",
     marginBottom: 4,
   },
   phaseDetails: {
     color: "#fff",
-    fontFamily: "SpaceMono",
+
     fontSize: 14,
   },
   position: {
     color: "#fff",
-    fontFamily: "SpaceMono",
+
     fontSize: 14,
     marginTop: 8,
   },
   nextPhase: {
     color: "#fff",
-    fontFamily: "SpaceMono",
+
     fontSize: 14,
     marginTop: 8,
     fontStyle: "italic",

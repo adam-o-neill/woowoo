@@ -4,6 +4,9 @@ import { formatInTimeZone } from "date-fns-tz";
 import { Section } from "./Section";
 import { useBirthChart } from "@/hooks/useBirthChart";
 import { BirthInfoInputs } from "./BirthInfoInputs";
+import { useTheme } from "@/contexts/ThemeContext";
+import { ThemedText } from "./ThemedText";
+import { ThemedView } from "./ThemedView";
 
 // Add these symbol mappings at the top
 const planetSymbols: { [key: string]: string } = {
@@ -37,6 +40,7 @@ const zodiacSymbols: { [key: string]: string } = {
 export function BirthChart() {
   const { birthInfo, chartData, loading, error, updateBirthInfo } =
     useBirthChart();
+  const { colors, spacing, borderRadius } = useTheme();
 
   if (loading) {
     return (
@@ -86,9 +90,9 @@ export function BirthChart() {
   };
 
   // Use the new BirthInfoInputs component
-  if (!birthInfo || !chartData) {
-    return <BirthInfoInputs onSubmit={updateBirthInfo} loading={loading} />;
-  }
+  // if (!birthInfo || !chartData) {
+  return <BirthInfoInputs onSubmit={updateBirthInfo} loading={loading} />;
+  // }
 
   // Format the timestamp in UTC
   const formattedUtcTime = formatInTimeZone(
@@ -104,75 +108,81 @@ export function BirthChart() {
   );
 
   return (
-    <View style={styles.container}>
-      <Section title="My Birth Chart" container>
-        <Section title="Birth Details">
-          <Text style={styles.text}>Date: {formattedUtcDate}</Text>
-          <Text style={styles.text}>Time: {formattedUtcTime} UTC</Text>
-          <Text style={styles.text}>Place: {chartData.location.place}</Text>
-        </Section>
+    <ThemedView>
+      <ThemedText
+        variant="headingMedium"
+        color="primary"
+        style={{ marginBottom: spacing.md }}
+      >
+        My Birth Chart
+      </ThemedText>
 
-        <Section title="Angular Points">
-          {[
-            { name: "Ascendant (Rising)", value: chartData.ascendant },
-            { name: "Midheaven (MC)", value: chartData.midheaven },
-            { name: "Descendant (DC)", value: chartData.descendant },
-            { name: "Imum Coeli (IC)", value: chartData.imumCoeli },
-          ].map((point) => {
-            const position = getZodiacPosition(point.value);
+      <Section title="Birth Details">
+        <Text style={styles.text}>Date: {formattedUtcDate}</Text>
+        <Text style={styles.text}>Time: {formattedUtcTime} UTC</Text>
+        <Text style={styles.text}>Place: {chartData.location.place}</Text>
+      </Section>
+
+      <Section title="Angular Points">
+        {[
+          { name: "Ascendant (Rising)", value: chartData.ascendant },
+          { name: "Midheaven (MC)", value: chartData.midheaven },
+          { name: "Descendant (DC)", value: chartData.descendant },
+          { name: "Imum Coeli (IC)", value: chartData.imumCoeli },
+        ].map((point) => {
+          const position = getZodiacPosition(point.value);
+          return (
+            <Text key={point.name} style={styles.text}>
+              {point.name}:{" "}
+              <Text style={styles.astronomicon}>{position.symbol}</Text>{" "}
+              {position.sign} {position.position}
+            </Text>
+          );
+        })}
+      </Section>
+
+      <Section title="Planetary Positions">
+        {chartData.planets.map((planet: any) => {
+          const position = getZodiacPosition(planet.longitude);
+          return (
+            <View key={planet.name} style={styles.planetRow}>
+              <Text style={styles.text}>
+                <Text style={styles.astronomicon}>
+                  {planetSymbols[planet.name]}
+                </Text>{" "}
+                {planet.name}:{" "}
+                <Text style={styles.astronomicon}>{position.symbol}</Text>{" "}
+                {position.sign} {position.position}
+              </Text>
+            </View>
+          );
+        })}
+      </Section>
+
+      <Section title="House Cusps">
+        {chartData.houses &&
+          chartData.houses.map((cusp: any, index: any) => {
+            const position = getZodiacPosition(cusp);
             return (
-              <Text key={point.name} style={styles.text}>
-                {point.name}:{" "}
+              <Text key={index} style={styles.text}>
+                House {index + 1}:{" "}
                 <Text style={styles.astronomicon}>{position.symbol}</Text>{" "}
                 {position.sign} {position.position}
               </Text>
             );
           })}
-        </Section>
-
-        <Section title="Planetary Positions">
-          {chartData.planets.map((planet: any) => {
-            const position = getZodiacPosition(planet.longitude);
-            return (
-              <View key={planet.name} style={styles.planetRow}>
-                <Text style={styles.text}>
-                  <Text style={styles.astronomicon}>
-                    {planetSymbols[planet.name]}
-                  </Text>{" "}
-                  {planet.name}:{" "}
-                  <Text style={styles.astronomicon}>{position.symbol}</Text>{" "}
-                  {position.sign} {position.position}
-                </Text>
-              </View>
-            );
-          })}
-        </Section>
-
-        <Section title="House Cusps">
-          {chartData.houses &&
-            chartData.houses.map((cusp: any, index: any) => {
-              const position = getZodiacPosition(cusp);
-              return (
-                <Text key={index} style={styles.text}>
-                  House {index + 1}:{" "}
-                  <Text style={styles.astronomicon}>{position.symbol}</Text>{" "}
-                  {position.sign} {position.position}
-                </Text>
-              );
-            })}
-        </Section>
-
-        {chartData.aspects && (
-          <Section title="Major Aspects">
-            {chartData.aspects.map((aspect: any, index: any) => (
-              <Text key={index} style={styles.text}>
-                {aspect}
-              </Text>
-            ))}
-          </Section>
-        )}
       </Section>
-    </View>
+
+      {chartData.aspects && (
+        <Section title="Major Aspects">
+          {chartData.aspects.map((aspect: any, index: any) => (
+            <Text key={index} style={styles.text}>
+              {aspect}
+            </Text>
+          ))}
+        </Section>
+      )}
+    </ThemedView>
   );
 }
 
@@ -190,7 +200,7 @@ const styles = StyleSheet.create({
   promptText: {
     color: "#fff",
     textAlign: "center",
-    fontFamily: "SpaceMono",
+
     fontSize: 14,
   },
   modalContainer: {
@@ -209,10 +219,8 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    color: "#fff",
     marginBottom: 20,
     textAlign: "center",
-    fontFamily: "SpaceMono",
   },
   input: {
     height: 40,
@@ -220,10 +228,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 12,
     paddingHorizontal: 8,
-    color: "#fff",
     backgroundColor: "#000",
     borderRadius: 4,
-    fontFamily: "SpaceMono",
   },
   buttonContainer: {
     flexDirection: "row",
@@ -239,13 +245,9 @@ const styles = StyleSheet.create({
   },
   insightsTitle: {
     fontSize: 18,
-    color: "#fff",
     marginBottom: 12,
-    fontFamily: "SpaceMono",
   },
   insightsText: {
-    color: "#fff",
-    fontFamily: "SpaceMono",
     fontSize: 14,
   },
   loadingContainer: {
@@ -254,8 +256,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   text: {
-    color: "#fff",
-    fontFamily: "SpaceMono",
     fontSize: 14,
     marginBottom: 4,
   },
@@ -267,13 +267,12 @@ const styles = StyleSheet.create({
   },
   smallText: {
     color: "#999",
-    fontFamily: "SpaceMono",
+
     fontSize: 12,
   },
   astronomicon: {
     fontFamily: "Astronomicon",
     fontSize: 18, // Slightly larger for better visibility
-    color: "#fff",
   },
   copyButton: {
     marginTop: 20,
@@ -284,7 +283,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: "#fff",
-    fontFamily: "SpaceMono",
+
     fontSize: 16,
   },
 });

@@ -26,9 +26,7 @@ export default function Layout() {
         name="index"
         options={{
           title: "WooWoo",
-          headerTitleStyle: {
-            fontFamily: "SpaceMono",
-          },
+          headerTitleStyle: {},
         }}
       />
       <Stack.Screen name="(auth)/(verify)" />

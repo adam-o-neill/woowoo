@@ -12,6 +12,9 @@ import { useQuery } from "@tanstack/react-query";
 import Markdown from "react-native-markdown-display";
 import { scenarioAPI } from "@/lib/api/scenario";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
 
 import { scenarios } from "@/data/scenarios";
 import { useBirthChart } from "@/hooks/useBirthChart";
@@ -21,6 +24,7 @@ export default function ScenarioScreen() {
   const { id } = useLocalSearchParams();
   const { session } = useAuth();
   const { birthInfo } = useBirthChart();
+  const { colors, spacing, borderRadius } = useTheme();
 
   const scenario = scenarios.find((s) => s.id === id);
 
@@ -37,48 +41,98 @@ export default function ScenarioScreen() {
     enabled: !!birthInfo?.id && !!scenario,
   });
 
+  // Create markdown styles using theme colors
+  const markdownStyles = {
+    body: { color: colors.text },
+    heading1: {
+      color: colors.primary,
+      fontSize: 24,
+      marginBottom: 16,
+      marginTop: 24,
+    },
+    heading2: {
+      color: colors.primary,
+      fontSize: 20,
+      marginBottom: 12,
+      marginTop: 20,
+    },
+    heading3: {
+      color: colors.primary,
+      fontSize: 18,
+      marginBottom: 8,
+      marginTop: 16,
+    },
+    paragraph: {
+      color: colors.text,
+      fontSize: 16,
+      lineHeight: 24,
+      marginBottom: 12,
+    },
+    link: {
+      color: colors.accent1,
+      textDecorationLine: "underline" as const,
+    },
+    list: {
+      color: colors.text,
+      marginBottom: 12,
+    },
+    listItem: {
+      color: colors.text,
+      marginBottom: 4,
+    },
+    hr: {
+      backgroundColor: colors.border,
+      height: 1,
+      marginVertical: 16,
+    },
+    blockquote: {
+      borderLeftWidth: 4,
+      borderLeftColor: colors.border,
+      paddingLeft: 16,
+      marginLeft: 0,
+      marginVertical: 12,
+    },
+    codeBlock: {
+      backgroundColor: colors.backgroundSecondary,
+      padding: 12,
+      borderRadius: borderRadius.md,
+      color: colors.text,
+    },
+  };
+
   return (
     <>
       <Stack.Screen
         options={{
           title: scenario?.title || "Scenario",
-          headerStyle: { backgroundColor: "#000" },
-          headerTintColor: "#fff",
+          headerTintColor: colors.text,
+          headerStyle: {
+            backgroundColor: colors.background,
+          },
           headerLeft: () => (
             <TouchableOpacity
               onPress={() => router.back()}
               style={styles.backButton}
             >
-              <Ionicons name="arrow-back" size={24} color="#fff" />
+              <Ionicons name="arrow-back" size={24} color={colors.text} />
             </TouchableOpacity>
           ),
         }}
       />
-      <ScrollView style={styles.container}>
+      <ScrollView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        contentContainerStyle={{ padding: spacing.md }}
+      >
         {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#fff" />
+          <View style={[styles.loadingContainer, { padding: spacing.xl }]}>
+            <ActivityIndicator size="large" color={colors.primary} />
           </View>
         ) : (
-          <View style={styles.resultContainer}>
-            <Markdown
-              style={{
-                body: styles.markdownBody,
-                heading1: styles.heading1,
-                heading2: styles.heading2,
-                heading3: styles.heading3,
-                paragraph: styles.paragraph,
-                link: styles.link,
-                list: styles.list,
-                listItem: styles.listItem,
-                hr: styles.hr,
-                blockquote: styles.blockquote,
-                code_block: styles.codeBlock,
-              }}
-            >
+          <ThemedView variant="card" style={styles.resultContainer}>
+            <Markdown style={markdownStyles}>
               {result || "_No result available_"}
             </Markdown>
-          </View>
+          </ThemedView>
         )}
       </ScrollView>
     </>
@@ -88,79 +142,14 @@ export default function ScenarioScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000",
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
   },
   resultContainer: {
-    padding: 20,
-  },
-  markdownBody: {
-    color: "#fff",
-    fontFamily: "SpaceMono",
-  },
-  heading1: {
-    color: "#fff",
-    fontSize: 24,
-    fontFamily: "SpaceMono",
-    marginBottom: 16,
-    marginTop: 24,
-  },
-  heading2: {
-    color: "#fff",
-    fontSize: 20,
-    fontFamily: "SpaceMono",
-    marginBottom: 12,
-    marginTop: 20,
-  },
-  heading3: {
-    color: "#fff",
-    fontSize: 18,
-    fontFamily: "SpaceMono",
-    marginBottom: 8,
-    marginTop: 16,
-  },
-  paragraph: {
-    color: "#fff",
-    fontFamily: "SpaceMono",
-    fontSize: 16,
-    lineHeight: 24,
-    marginBottom: 12,
-  },
-  link: {
-    color: "#4a9eff",
-    textDecorationLine: "underline",
-  },
-  list: {
-    color: "#fff",
-    marginBottom: 12,
-  },
-  listItem: {
-    color: "#fff",
-    marginBottom: 4,
-  },
-  hr: {
-    backgroundColor: "#333",
-    height: 1,
-    marginVertical: 16,
-  },
-  blockquote: {
-    borderLeftWidth: 4,
-    borderLeftColor: "#333",
-    paddingLeft: 16,
-    marginLeft: 0,
-    marginVertical: 12,
-  },
-  codeBlock: {
-    backgroundColor: "#111",
-    padding: 12,
-    borderRadius: 4,
-    fontFamily: "SpaceMono",
-    color: "#fff",
+    padding: 16,
   },
   backButton: {
     marginLeft: 8,
