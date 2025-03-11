@@ -8,10 +8,17 @@ import { useBirthChart } from "@/hooks/useBirthChart";
 import { useTheme } from "@/contexts/ThemeContext";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import FriendsScreen from "./friends";
+import { BirthInfoInputs } from "@/components/BirthInfoInputs";
 
 const HomeScreen = () => {
-  const { birthInfo } = useBirthChart();
+  const { birthInfo, chartData, loading, error, updateBirthInfo } =
+    useBirthChart();
   const { colors, spacing } = useTheme();
+
+  if (!birthInfo || !chartData) {
+    return <BirthInfoInputs onSubmit={updateBirthInfo} loading={loading} />;
+  }
 
   return (
     <ScrollView
@@ -24,20 +31,30 @@ const HomeScreen = () => {
       >
         {format(new Date(), "EEEE, MMMM d, yyyy")}
       </ThemedText>
-      {/* 
-      <View style={{ marginTop: spacing.lg }}>
-        <DailyDashboard />
-      </View>
 
-      {birthInfo && birthInfo.id && (
+      {!birthInfo || !chartData ? (
+        <BirthInfoInputs onSubmit={updateBirthInfo} loading={loading} />
+      ) : (
+        <>
+          <View style={{ marginTop: spacing["2xl"] }}>
+            <DailyDashboard />
+          </View>
+
+          <View style={{ marginTop: spacing["4xl"] }}>
+            <FriendsScreen />
+          </View>
+        </>
+      )}
+
+      {/* {birthInfo && birthInfo.id && (
         <View style={{ marginTop: spacing.lg }}>
           <ScenarioList />
         </View>
-      )} */}
+      )}
 
       <View style={{ marginTop: spacing.lg, marginBottom: spacing["3xl"] }}>
         <BirthChart />
-      </View>
+      </View> */}
     </ScrollView>
   );
 };

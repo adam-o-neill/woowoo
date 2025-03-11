@@ -15,6 +15,20 @@
       "when": 1734300574475,
       "tag": "0001_past_lenny_balinger",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1741627760239,
+      "tag": "0002_redundant_mockingbird",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1741710065181,
+      "tag": "0003_rare_blur",
+      "breakpoints": true
     }
   ]
 }

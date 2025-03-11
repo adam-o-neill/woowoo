@@ -443,11 +443,12 @@ const calculateBirthChart = async (
   dateTime: string,
   latitude: number,
   longitude: number,
-  place: string
+  place: string,
+  timezone: string
 ) => {
   try {
     // Parse the date and time using moment-timezone
-    const birthMoment = moment.tz(dateTime, place);
+    const birthMoment = moment.tz(dateTime, timezone);
 
     // Calculate Julian date
     const jd = sweph.julday(
@@ -514,6 +515,164 @@ const planets = [
   { name: "Neptune", id: sweph.constants.SE_NEPTUNE },
   { name: "Pluto", id: sweph.constants.SE_PLUTO },
 ];
+
+export function calculateChartCompatibility(chart1: any, chart2: any) {
+  // Extract planets from both charts
+  const planets1 = chart1.planets;
+  const planets2 = chart2.planets;
+
+  // Overall compatibility score
+  let overallScore = 0;
+
+  // Calculate sun sign compatibility
+  const sun1 = planets1.find((p: any) => p.name === "Sun");
+  const sun2 = planets2.find((p: any) => p.name === "Sun");
+  const sunCompatibility = calculateSignCompatibility(
+    sun1.zodiacSign,
+    sun2.zodiacSign
+  );
+
+  // Calculate moon sign compatibility
+  const moon1 = planets1.find((p: any) => p.name === "Moon");
+  const moon2 = planets2.find((p: any) => p.name === "Moon");
+  const moonCompatibility = calculateSignCompatibility(
+    moon1.zodiacSign,
+    moon2.zodiacSign
+  );
+
+  // Calculate Venus compatibility (love)
+  const venus1 = planets1.find((p: any) => p.name === "Venus");
+  const venus2 = planets2.find((p: any) => p.name === "Venus");
+  const venusCompatibility = calculateSignCompatibility(
+    venus1.zodiacSign,
+    venus2.zodiacSign
+  );
+
+  // Calculate Mars compatibility (passion)
+  const mars1 = planets1.find((p: any) => p.name === "Mars");
+  const mars2 = planets2.find((p: any) => p.name === "Mars");
+  const marsCompatibility = calculateSignCompatibility(
+    mars1.zodiacSign,
+    mars2.zodiacSign
+  );
+
+  // Calculate Mercury compatibility (communication)
+  const mercury1 = planets1.find((p: any) => p.name === "Mercury");
+  const mercury2 = planets2.find((p: any) => p.name === "Mercury");
+  const mercuryCompatibility = calculateSignCompatibility(
+    mercury1.zodiacSign,
+    mercury2.zodiacSign
+  );
+
+  // Calculate aspects between charts
+  const aspectsCompatibility = calculateAspectsCompatibility(
+    planets1,
+    planets2
+  );
+
+  // Calculate final weighted score
+  overallScore =
+    sunCompatibility * 0.2 +
+    moonCompatibility * 0.2 +
+    venusCompatibility * 0.2 +
+    marsCompatibility * 0.15 +
+    mercuryCompatibility * 0.15 +
+    aspectsCompatibility * 0.1;
+
+  // Generate compatibility report
+  return {
+    overall: {
+      score: Math.round(overallScore * 100) / 100,
+      description: getCompatibilityDescription(overallScore),
+    },
+    areas: {
+      identity: {
+        score: sunCompatibility,
+        description: `Sun sign compatibility: ${sun1.zodiacSign} and ${sun2.zodiacSign}`,
+      },
+      emotions: {
+        score: moonCompatibility,
+        description: `Moon sign compatibility: ${moon1.zodiacSign} and ${moon2.zodiacSign}`,
+      },
+      love: {
+        score: venusCompatibility,
+        description: `Love style compatibility: ${venus1.zodiacSign} and ${venus2.zodiacSign}`,
+      },
+      passion: {
+        score: marsCompatibility,
+        description: `Passion compatibility: ${mars1.zodiacSign} and ${mars2.zodiacSign}`,
+      },
+      communication: {
+        score: mercuryCompatibility,
+        description: `Communication compatibility: ${mercury1.zodiacSign} and ${mercury2.zodiacSign}`,
+      },
+    },
+  };
+}
+
+// Helper function to calculate sign compatibility
+function calculateSignCompatibility(sign1: string, sign2: string) {
+  // Element compatibility
+  const elements: { [key: string]: string } = {
+    Aries: "Fire",
+    Leo: "Fire",
+    Sagittarius: "Fire",
+    Taurus: "Earth",
+    Virgo: "Earth",
+    Capricorn: "Earth",
+    Gemini: "Air",
+    Libra: "Air",
+    Aquarius: "Air",
+    Cancer: "Water",
+    Scorpio: "Water",
+    Pisces: "Water",
+  };
+
+  const element1 = elements[sign1];
+  const element2 = elements[sign2];
+
+  // Element compatibility scores (0-1)
+  if (element1 === element2) {
+    return 0.9; // Same element = high compatibility
+  } else if (
+    (element1 === "Fire" && element2 === "Air") ||
+    (element1 === "Air" && element2 === "Fire") ||
+    (element1 === "Earth" && element2 === "Water") ||
+    (element1 === "Water" && element2 === "Earth")
+  ) {
+    return 0.8; // Complementary elements
+  } else if (
+    (element1 === "Fire" && element2 === "Earth") ||
+    (element1 === "Earth" && element2 === "Fire") ||
+    (element1 === "Air" && element2 === "Water") ||
+    (element1 === "Water" && element2 === "Air")
+  ) {
+    return 0.4; // Challenging elements
+  } else {
+    return 0.6; // Neutral
+  }
+}
+
+// Helper function to calculate aspects compatibility
+function calculateAspectsCompatibility(planets1: any[], planets2: any[]) {
+  // Simplified for now - would typically analyze all planet positions and angles
+  return 0.7; // Default moderate compatibility
+}
+
+// Helper function to get compatibility description
+function getCompatibilityDescription(score: number) {
+  if (score >= 0.8) {
+    return "Exceptionally high compatibility! You have a natural understanding and flow together.";
+  } else if (score >= 0.7) {
+    return "Strong compatibility. You complement each other well with some exciting differences.";
+  } else if (score >= 0.5) {
+    return "Moderate compatibility. You'll experience both harmony and some challenges that help you grow.";
+  } else if (score >= 0.3) {
+    return "Some compatibility challenges. Your differences may create friction, but also opportunities for learning.";
+  } else {
+    return "This connection may feel challenging. You'll need to work on understanding each other's differences.";
+  }
+}
 
 export {
   planets,

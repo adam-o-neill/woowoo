@@ -90,9 +90,9 @@ export function BirthChart() {
   };
 
   // Use the new BirthInfoInputs component
-  // if (!birthInfo || !chartData) {
-  return <BirthInfoInputs onSubmit={updateBirthInfo} loading={loading} />;
-  // }
+  if (!birthInfo || !chartData) {
+    return <BirthInfoInputs onSubmit={updateBirthInfo} loading={loading} />;
+  }
 
   // Format the timestamp in UTC
   const formattedUtcTime = formatInTimeZone(

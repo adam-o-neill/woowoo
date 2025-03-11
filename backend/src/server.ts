@@ -9,13 +9,16 @@ import * as ngrok from "@ngrok/ngrok";
 import birthInfoRouter from "./routes/birthInfo";
 import dailyDashboardRouter from "./routes/dailyDashboard";
 import scenariosRouter from "./routes/scenarios";
-
+import friendsRouter from "./routes/friends";
+import chatRouter from "./routes/chat";
 // Import middleware
 import { authenticateApiKey } from "./middleware/auth";
 
 const app = express();
 const PORT = process.env.PORT || 3002;
 const HOST = "0.0.0.0"; // Listen on all network interfaces
+
+app.set("trust proxy", 1);
 
 app.use(
   helmet({
@@ -79,6 +82,8 @@ app.use(authenticateApiKey);
 app.use("/api", birthInfoRouter);
 app.use("/api", dailyDashboardRouter);
 app.use("/api", scenariosRouter);
+app.use("/api", friendsRouter);
+app.use("/api", chatRouter);
 
 // Error handling
 interface ErrorWithStack extends Error {

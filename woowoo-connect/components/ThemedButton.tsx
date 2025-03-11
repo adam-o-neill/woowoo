@@ -4,10 +4,14 @@ import {
   View,
   StyleSheet,
   ActivityIndicator,
+  ViewStyle,
+  StyleProp,
+  Text,
 } from "react-native";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { Spacing, BorderRadius, Layout } from "@/constants/Spacing";
 import { ThemedText } from "./ThemedText";
+import { Ionicons } from "@expo/vector-icons";
 
 interface ThemedButtonProps {
   onPress: () => void;
@@ -19,6 +23,8 @@ interface ThemedButtonProps {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   fullWidth?: boolean;
+  style?: StyleProp<ViewStyle>;
+  icon?: string;
 }
 
 export function ThemedButton({
@@ -31,10 +37,11 @@ export function ThemedButton({
   leftIcon,
   rightIcon,
   fullWidth = false,
+  style,
+  icon,
 }: ThemedButtonProps) {
   // Get theme colors
   const primary = useThemeColor({}, "buttonPrimary");
-  console.log("primary", primary);
   const primaryText = useThemeColor({}, "buttonPrimaryText");
   const secondary = useThemeColor({}, "buttonSecondary");
   const secondaryText = useThemeColor({}, "buttonSecondaryText");
@@ -107,32 +114,26 @@ export function ThemedButton({
         sizeStyle,
         widthStyle,
         disabled && styles.disabled,
+        style,
       ]}
       onPress={onPress}
-      // disabled={disabled || loading}
-      // activeOpacity={0.7}
+      disabled={disabled || loading}
     >
-      <View style={styles.contentContainer}>
-        {leftIcon && !loading && (
-          <View style={styles.leftIcon}>{leftIcon}</View>
-        )}
-
-        {loading ? (
-          <ActivityIndicator
-            size="small"
-            color={textStyle.color}
-            style={styles.loader}
-          />
-        ) : (
-          <ThemedText variant={"labelMedium"} style={[styles.text, textStyle]}>
-            {title}
-          </ThemedText>
-        )}
-
-        {rightIcon && !loading && (
-          <View style={styles.rightIcon}>{rightIcon}</View>
-        )}
-      </View>
+      {loading ? (
+        <ActivityIndicator color={textColor} />
+      ) : (
+        <View style={styles.buttonContent}>
+          {icon && (
+            <Ionicons
+              name={icon as any}
+              size={20}
+              color={textColor}
+              style={styles.icon}
+            />
+          )}
+          <Text style={[styles.text, { color: textColor }]}>{title}</Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 }
@@ -178,7 +179,7 @@ const styles = StyleSheet.create({
   fullWidth: {
     width: "100%",
   },
-  contentContainer: {
+  buttonContent: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -186,13 +187,7 @@ const styles = StyleSheet.create({
   text: {
     textAlign: "center",
   },
-  leftIcon: {
-    marginRight: Spacing.xs,
-  },
-  rightIcon: {
-    marginLeft: Spacing.xs,
-  },
-  loader: {
-    marginHorizontal: Spacing.xs,
+  icon: {
+    marginRight: 8,
   },
 });

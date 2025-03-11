@@ -1,7 +1,7 @@
 import express from "express";
 import { authenticateUser } from "../auth/supabase";
 import { db } from "../db";
-import { birthInfo, birthChart } from "../db/schema";
+import { birthInfo, birthChart, person } from "../db/schema";
 import { eq } from "drizzle-orm";
 import { calculateBirthChart } from "../utils/astrology";
 import moment from "moment-timezone";
@@ -18,27 +18,42 @@ interface BirthInfoRequest {
 // Get birth info for current user
 router.get("/birth-info", authenticateUser, async (req: any, res: any) => {
   try {
-    // First get the birth info
-    const userBirthInfo = await db
+    // Find the person record for this user
+    const userPerson = await db
       .select()
-      .from(birthInfo)
-      .where(eq(birthInfo.userId, req.user.id))
+      .from(person)
+      .where(eq(person.userId, req.user.id))
       .limit(1);
 
-    if (!userBirthInfo || userBirthInfo.length === 0) {
+    if (!userPerson || userPerson.length === 0) {
+      return res.status(404).json({ message: "User profile not found" });
+    }
+
+    if (!userPerson[0].birthInfoId) {
       return res.status(404).json({ message: "Birth info not found" });
     }
 
-    // Then get the associated chart data
-    const userBirthChart = await db
+    // Get the birth info
+    const birthInfoData = await db
+      .select()
+      .from(birthInfo)
+      .where(eq(birthInfo.id, userPerson[0].birthInfoId))
+      .limit(1);
+
+    if (!birthInfoData || birthInfoData.length === 0) {
+      return res.status(404).json({ message: "Birth info not found" });
+    }
+
+    // Get the associated chart data
+    const chartData = await db
       .select()
       .from(birthChart)
-      .where(eq(birthChart.birthInfoId, userBirthInfo[0].id))
+      .where(eq(birthChart.birthInfoId, birthInfoData[0].id))
       .limit(1);
 
     res.json({
-      birthInfo: userBirthInfo[0],
-      birthChart: userBirthChart[0],
+      birthInfo: birthInfoData[0],
+      birthChart: chartData[0] || null,
     });
   } catch (error) {
     console.error("Error fetching birth info:", error);
@@ -56,17 +71,30 @@ router.post("/birth-info", authenticateUser, async (req: any, res: any) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // First, geocode the location to get coordinates and timezone
+    // First, check if a person record exists for this user
+    let userPerson = await db
+      .select()
+      .from(person)
+      .where(eq(person.userId, req.user.id))
+      .limit(1);
+
+    // If no person record exists, create one
+    if (!userPerson || userPerson.length === 0) {
+      userPerson = await db
+        .insert(person)
+        .values({
+          name: req.user.email || "User", // Use email or default name
+          userId: req.user.id,
+          createdById: req.user.id,
+        })
+        .returning();
+    } else {
+      userPerson = [userPerson[0]]; // Ensure it's in array format
+    }
+
+    // Geocode the location to get coordinates and timezone
     const locationData = await geocode(placeOfBirth);
     const { latitude, longitude, timezone } = locationData;
-
-    // Delete existing birth info if it exists
-    await db.delete(birthInfo).where(eq(birthInfo.userId, req.user.id));
-
-    const [hours, minutes] = timeOfBirth.split(":").map(Number);
-
-    // Parse the birth date (assumes dateOfBirth is "YYYY-MM-DD")
-    const [year, month, day] = dateOfBirth.split("-").map(Number);
 
     // Create a timestamp that represents the local time at birth
     const localBirthMoment = moment.tz(
@@ -75,12 +103,19 @@ router.post("/birth-info", authenticateUser, async (req: any, res: any) => {
       timezone
     );
 
-    // Store both UTC and local information
+    // Delete existing birth info if it exists
+    if (userPerson[0].birthInfoId) {
+      await db
+        .delete(birthInfo)
+        .where(eq(birthInfo.id, userPerson[0].birthInfoId));
+    }
+
+    // Store birth information
     const [newBirthInfo] = await db
       .insert(birthInfo)
       .values({
-        userId: req.user.id,
-        dateOfBirth: localBirthMoment.toDate(), // Stores as UTC in database
+        personId: userPerson[0].id,
+        dateOfBirth: localBirthMoment.toDate(),
         timeOfBirth,
         placeOfBirth,
         latitude,
@@ -88,15 +123,23 @@ router.post("/birth-info", authenticateUser, async (req: any, res: any) => {
         timezone,
         originalLocalTime: timeOfBirth,
         originalTimeZone: timezone,
+        createdById: req.user.id,
       })
       .returning();
+
+    // Update the person record with the birth info ID
+    await db
+      .update(person)
+      .set({ birthInfoId: newBirthInfo.id })
+      .where(eq(person.id, userPerson[0].id));
 
     // Calculate birth chart using the precise local time
     const chartData = await calculateBirthChart(
       localBirthMoment.format(),
       latitude,
       longitude,
-      placeOfBirth
+      placeOfBirth,
+      timezone
     );
 
     // Store chart data

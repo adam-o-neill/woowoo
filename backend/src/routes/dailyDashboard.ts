@@ -33,7 +33,7 @@ router.get("/daily-dashboard", authenticateUser, async (req: any, res: any) => {
       return res.status(404).json({ message: "Birth chart not found" });
     }
 
-    const chartData = userBirthChart[0].chartData;
+    const chartData = JSON.parse(userBirthChart[0].chartData);
 
     // Calculate current transits
     const currentTransits = await calculateCurrentTransits(

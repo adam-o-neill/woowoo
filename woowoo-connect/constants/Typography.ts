@@ -92,6 +92,12 @@ export const Typography = StyleSheet.create({
   },
 
   // Body text
+  bodyXLarge: {
+    fontFamily: fonts.primary,
+    fontSize: fontSizes["2xl"],
+    lineHeight: fontSizes["2xl"] * lineHeights.normal,
+    fontWeight: fontWeights.regular,
+  },
   bodyLarge: {
     fontFamily: fonts.primary,
     fontSize: fontSizes.lg,

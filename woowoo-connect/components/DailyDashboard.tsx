@@ -36,12 +36,12 @@ export function DailyDashboard() {
       const cached = cachedData ? JSON.parse(cachedData) : {};
 
       // If we have today's data in cache, use it
-      // if (cached[today]) {
-      //   console.log("Using cached daily dashboard data");
-      //   setInsights(cached[today]);
-      //   setLoading(false);
-      //   return;
-      // }
+      if (cached[today]) {
+        console.log("Using cached daily dashboard data");
+        setInsights(cached[today]);
+        setLoading(false);
+        return;
+      }
 
       // If no cached data for today, fetch from API
       console.log("Fetching fresh daily dashboard data");
@@ -50,12 +50,9 @@ export function DailyDashboard() {
         session?.access_token || ""
       );
 
-      console.log(response);
-
       // Update cache with new data
       cached[today] = response.insights;
       await AsyncStorage.setItem("dailyDashboard", JSON.stringify(cached));
-      console.log(response.insights);
       setInsights(response.insights);
     } catch (error) {
       console.log(error);
@@ -106,45 +103,16 @@ export function DailyDashboard() {
       </View>
     );
   }
+  console.log(insights);
 
   return (
     <ThemedView>
-      <ThemedText
-        variant="headingMedium"
-        color="primary"
-        style={{ marginBottom: 16 }}
-      >
-        Today
-      </ThemedText>
-
       <View>
         {insights && (
           <>
-            <Section title="Daily Horoscope">
-              <ThemedText variant="bodyMedium">
-                {insights.daily_horoscope}
-              </ThemedText>
-            </Section>
-
-            <Section title="Emotional Forecast">
-              <View style={styles.moodContainer}>
-                <ThemedText variant="displaySmall" style={{ marginBottom: 8 }}>
-                  {insights.emotional_forecast.emoji}
-                </ThemedText>
-                <ThemedText variant="bodyMedium">
-                  {insights.emotional_forecast.insight}
-                </ThemedText>
-              </View>
-            </Section>
-
-            <Section title="Moon Phase">
-              <ThemedText variant="labelLarge" style={{ marginBottom: 8 }}>
-                {insights.moon_phase_insights.phase}
-              </ThemedText>
-              <ThemedText variant="bodyMedium">
-                {insights.moon_phase_insights.insight}
-              </ThemedText>
-            </Section>
+            <ThemedText variant="bodyLarge" style={{ textAlign: "center" }}>
+              {insights.daily_horoscope}
+            </ThemedText>
           </>
         )}
 

@@ -3,6 +3,8 @@ import React from "react";
 import { useTheme } from "@react-navigation/native";
 import { SignOutButton } from "@/components/SignOutButton";
 import { View } from "react-native";
+import { Tabs } from "expo-router";
+import { FontAwesome } from "@expo/vector-icons";
 
 export default function Layout() {
   const theme = useTheme();
@@ -30,6 +32,15 @@ export default function Layout() {
         }}
       />
       <Stack.Screen name="(auth)/(verify)" />
+      <Tabs.Screen
+        name="chat"
+        options={{
+          title: "Chat",
+          tabBarIcon: ({ color }) => (
+            <FontAwesome name="comment" size={24} color={color} />
+          ),
+        }}
+      />
     </Stack>
   );
 }

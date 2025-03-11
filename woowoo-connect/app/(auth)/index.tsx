@@ -8,13 +8,31 @@ import {
 } from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemedButton } from "@/components/ThemedButton";
-import CountryPicker, { CountryCode } from "react-native-country-picker-modal";
+import CountryPicker, {
+  CountryCode,
+  Country,
+} from "react-native-country-picker-modal";
 import { useRouter } from "expo-router";
 
 interface AuthError {
   message: string;
   status: number;
 }
+
+// Create a custom theme
+const countryPickerTheme = {
+  primaryColor: "#3498db",
+  primaryColorVariant: "#2980b9",
+  backgroundColor: "#ffffff",
+  onBackgroundTextColor: "#000000",
+  fontSize: 16,
+  fontFamily: undefined,
+  filterPlaceholderTextColor: "#999",
+  activeOpacity: 0.7,
+  itemHeight: 50,
+  flagSize: 25,
+  flagSizeButton: 20,
+};
 
 const AuthScreen = () => {
   const { signIn, signUp } = useAuth();
@@ -46,12 +64,18 @@ const AuthScreen = () => {
         <CountryPicker
           countryCode={countryCode as CountryCode}
           withFilter
+          withFlagButton
+          withCallingCode
+          withCallingCodeButton
           onSelect={(country) => {
             setCountryCode(country.cca2);
             setCallingCode(country.callingCode[0]);
           }}
+          containerButtonStyle={styles.countryPickerButton}
+          theme={countryPickerTheme}
+          visible={false}
         />
-        <Text style={styles.callingCode}>+{callingCode}</Text>
+        {/* <Text style={styles.callingCode}>+{callingCode}</Text> */}
         <TextInput
           style={styles.input}
           placeholder="Phone Number"
@@ -83,22 +107,20 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     padding: 16,
-    backgroundColor: "#000",
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 16,
     textAlign: "center",
-    color: "#fff",
   },
   phoneContainer: {
     flexDirection: "row",
     justifyContent: "center",
     marginBottom: 12,
+    padding: 52,
   },
   callingCode: {
-    color: "#fff",
     fontSize: 16,
     marginRight: 8,
     marginTop: 7,
@@ -109,10 +131,7 @@ const styles = StyleSheet.create({
     borderColor: "#333",
     borderWidth: 1,
     paddingHorizontal: 8,
-    color: "#fff",
-    backgroundColor: "#111",
     borderRadius: 4,
-
     marginBottom: 12,
   },
   error: {
@@ -128,6 +147,15 @@ const styles = StyleSheet.create({
     color: "#fff",
     textDecorationLine: "underline",
     textAlign: "center",
+  },
+  countryPickerButton: {
+    marginRight: 8,
+    padding: 8,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
 
