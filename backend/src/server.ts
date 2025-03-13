@@ -85,6 +85,11 @@ app.use("/api", scenariosRouter);
 app.use("/api", friendsRouter);
 app.use("/api", chatRouter);
 
+// Test route
+app.get("/test", (_req: Request, res: Response) => {
+  res.status(200).json({ message: "Test route working!" });
+});
+
 // Error handling
 interface ErrorWithStack extends Error {
   stack?: string;
@@ -112,9 +117,9 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 
   // Start ngrok if we're in development mode
-  if (process.env.NODE_ENV !== "production") {
-    startNgrok();
-  }
+  // if (process.env.NODE_ENV !== "production") {
+  //   startNgrok();
+  // }
 });
 
 // Function to start ngrok

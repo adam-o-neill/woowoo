@@ -168,7 +168,6 @@ export function ChatInterface({
       textDecorationLine: "underline",
     },
     blockquote: {
-      backgroundColor: colors.cardBackground,
       borderLeftColor: colors.primary,
       borderLeftWidth: 4,
       paddingLeft: 8,
@@ -176,14 +175,12 @@ export function ChatInterface({
       marginVertical: 6,
     },
     code_block: {
-      backgroundColor: colors.cardBackground,
       padding: 10,
       borderRadius: 4,
       fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
       fontSize: 14,
     },
     code_inline: {
-      backgroundColor: colors.cardBackground,
       fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
       fontSize: 14,
       padding: 2,
@@ -199,10 +196,7 @@ export function ChatInterface({
           styles.messageContainer,
           isUser
             ? [styles.userMessage, { backgroundColor: colors.primary }]
-            : [
-                styles.assistantMessage,
-                { backgroundColor: colors.cardBackground },
-              ],
+            : [styles.assistantMessage],
         ]}
       >
         {isUser ? (
@@ -210,7 +204,7 @@ export function ChatInterface({
             {item.text}
           </ThemedText>
         ) : (
-          <Markdown style={markdownStyles}>{item.text}</Markdown>
+          <Markdown>{item.text}</Markdown>
         )}
       </View>
     );
@@ -220,7 +214,7 @@ export function ChatInterface({
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 130 : 0}
     >
       <ThemedView style={styles.chatContainer}>
         <ThemedText variant="headingMedium" style={styles.title}>
@@ -281,7 +275,6 @@ const styles = StyleSheet.create({
   chatContainer: {
     flex: 1,
     borderRadius: 12,
-    padding: 16,
   },
   title: {
     marginBottom: 4,

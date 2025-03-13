@@ -7,9 +7,10 @@ import {
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import "react-native-reanimated";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { View, Text } from "react-native";
 
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import React from "react";
@@ -30,34 +31,49 @@ SplashScreen.preventAutoHideAsync();
 
 function AppNavigator() {
   const { session, isLoading } = useAuth();
+  const [authError, setAuthError] = useState(false);
 
+  // Add error handling for auth state
+  useEffect(() => {
+    if (authError) {
+      console.log("Authentication error detected, redirecting to auth screen");
+    }
+  }, [authError]);
+
+  // Show loading state while auth is initializing
   if (isLoading) {
-    return null;
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text>Loading...</Text>
+      </View>
+    );
   }
 
-  return (
-    <Stack screenOptions={{ headerShown: false }}>
-      {session ? (
+  // If no session, show auth screens
+  if (!session) {
+    return (
+      <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen
-          name="(tabs)"
+          name="(auth)"
           options={{
             headerShown: false,
             animation: "fade",
-            presentation: "modal",
           }}
         />
-      ) : (
-        <React.Fragment>
-          <Stack.Screen
-            name="(auth)"
-            options={{
-              headerShown: false,
-              animation: "fade",
-              presentation: "modal",
-            }}
-          />
-        </React.Fragment>
-      )}
+      </Stack>
+    );
+  }
+
+  // If authenticated, show main app
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen
+        name="(tabs)"
+        options={{
+          headerShown: false,
+          animation: "fade",
+        }}
+      />
     </Stack>
   );
 }

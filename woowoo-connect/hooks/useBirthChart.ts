@@ -20,9 +20,6 @@ export function useBirthChart() {
     }),
   });
 
-  console.log(data);
-  console.log(error);
-
   const { mutateAsync: updateBirthInfo } = useMutation({
     mutationFn: (info: BirthInfo) =>
       birthChartAPI.submitBirthInfo(session?.access_token || "", info),

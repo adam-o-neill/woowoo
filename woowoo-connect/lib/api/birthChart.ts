@@ -37,9 +37,13 @@ export const birthChartAPI = {
   },
 
   submitBirthInfo: async (accessToken: string, birthInfo: BirthInfo) => {
+    console.log("Submitting birth info", birthInfo);
     return apiClient.authenticatedFetch("/api/birth-info", accessToken, {
       method: "POST",
       body: JSON.stringify(birthInfo),
+      headers: {
+        "Content-Type": "application/json",
+      },
     });
   },
 };

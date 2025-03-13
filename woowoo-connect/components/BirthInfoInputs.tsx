@@ -1,23 +1,15 @@
 import React, { useState, useEffect } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  ScrollView,
-  KeyboardAvoidingView,
   Platform,
-  FlatList,
   Dimensions,
   SafeAreaView,
-  Keyboard,
-  InputAccessoryView,
-  ActivityIndicator,
   Modal,
 } from "react-native";
 import { format } from "date-fns";
-import { useRouter } from "expo-router";
 import { useTheme } from "@/contexts/ThemeContext";
 import { ThemedText } from "./ThemedText";
 import { ThemedView } from "./ThemedView";
@@ -64,6 +56,15 @@ const MINUTES = Array.from({ length: 60 }, (_, i) =>
 );
 const AMPM = ["AM", "PM"];
 
+// Helper function to create a date without timezone issues
+const createLocalDate = (year: number, month: number, day: number) => {
+  // Create a date string in ISO format but without the timezone part
+  const dateString = `${year}-${String(month + 1).padStart(2, "0")}-${String(
+    day
+  ).padStart(2, "0")}T00:00:00`;
+  return new Date(dateString);
+};
+
 // Simple embedded form component
 export function BirthInfoForm({
   initialValues = {},
@@ -75,11 +76,17 @@ export function BirthInfoForm({
   const { colors, spacing } = useTheme();
 
   // Form state
-  const [date, setDate] = useState<Date>(
-    initialValues.dateOfBirth
-      ? new Date(initialValues.dateOfBirth)
-      : new Date(1990, 0, 1)
-  );
+  const [date, setDate] = useState<Date>(() => {
+    if (initialValues.dateOfBirth) {
+      // Parse the date string without timezone conversion
+      const [year, month, day] = initialValues.dateOfBirth
+        .split("-")
+        .map(Number);
+      return createLocalDate(year, month - 1, day);
+    }
+    return createLocalDate(1990, 0, 1); // Default to Jan 1, 1990
+  });
+
   const [time, setTime] = useState<Date>(() => {
     const defaultTime = new Date();
     defaultTime.setHours(12, 0, 0, 0);
@@ -90,6 +97,7 @@ export function BirthInfoForm({
     }
     return defaultTime;
   });
+
   const [placeOfBirth, setPlaceOfBirth] = useState(
     initialValues.placeOfBirth || ""
   );
@@ -102,14 +110,7 @@ export function BirthInfoForm({
   // Auto-submit when all fields are filled (for FriendForm)
   useEffect(() => {
     if (!showSubmitButton && placeOfBirth.trim() && date && time) {
-      const formattedDate = format(date, "yyyy-MM-dd");
-      const formattedTime = format(time, "HH:mm");
-
-      onSubmit({
-        dateOfBirth: formattedDate,
-        timeOfBirth: formattedTime,
-        placeOfBirth: placeOfBirth.trim(),
-      });
+      handleSubmit();
     }
   }, [placeOfBirth, date, time, showSubmitButton]);
 
@@ -144,12 +145,20 @@ export function BirthInfoForm({
     if (Platform.OS === "android") {
       setPickerMode(null);
       if (selectedDate) {
-        setDate(selectedDate);
+        // For Android, create a new date to avoid timezone issues
+        const year = selectedDate.getFullYear();
+        const month = selectedDate.getMonth();
+        const day = selectedDate.getDate();
+        setDate(createLocalDate(year, month, day));
       }
     } else {
       // For iOS, we update the temp value and wait for confirm
       if (selectedDate) {
-        setTempDate(selectedDate);
+        // For iOS, create a new date to avoid timezone issues
+        const year = selectedDate.getFullYear();
+        const month = selectedDate.getMonth();
+        const day = selectedDate.getDate();
+        setTempDate(createLocalDate(year, month, day));
       }
     }
   };
@@ -174,7 +183,13 @@ export function BirthInfoForm({
       return;
     }
 
-    const formattedDate = format(date, "yyyy-MM-dd");
+    // Format the date in YYYY-MM-DD format without timezone conversion
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const formattedDate = `${year}-${month}-${day}`;
+
+    // Format the time in HH:MM format
     const formattedTime = format(time, "HH:mm");
 
     onSubmit({
@@ -244,9 +259,9 @@ export function BirthInfoForm({
         <ThemedButton
           title={submitButtonText}
           onPress={handleSubmit}
-          disabled={!placeOfBirth.trim() || loading}
           loading={loading}
-          style={{ marginTop: spacing.md }}
+          disabled={loading}
+          style={{ marginTop: 16 }}
         />
       )}
 
@@ -318,34 +333,6 @@ export function BirthInfoForm({
     </View>
   );
 }
-
-// For backward compatibility - this is the standalone version
-export function BirthInfoInputs({
-  onSubmit,
-  loading = false,
-}: {
-  onSubmit: (data: BirthInfoData) => void;
-  loading: boolean;
-}) {
-  return (
-    <View style={styles.standaloneContainer}>
-      <ThemedText variant="headingMedium" style={styles.title}>
-        Enter Your Birth Details
-      </ThemedText>
-      <ThemedText variant="bodyMedium" style={styles.subtitle}>
-        This information helps us create your personalized experience
-      </ThemedText>
-
-      <BirthInfoForm
-        onSubmit={onSubmit}
-        loading={loading}
-        showSubmitButton={true}
-      />
-    </View>
-  );
-}
-
-const { width, height } = Dimensions.get("window");
 
 const styles = StyleSheet.create({
   container: {

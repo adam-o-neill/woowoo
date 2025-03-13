@@ -9,7 +9,7 @@ const {
 // Person table - represents any individual in the system
 const person = pgTable("person", {
   id: uuid("id").defaultRandom().primaryKey(),
-  name: text("name").notNull(),
+  name: text("name"),
   email: text("email"),
   phone: text("phone"),
   notes: text("notes"),

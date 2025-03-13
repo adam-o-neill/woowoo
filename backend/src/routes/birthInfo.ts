@@ -17,6 +17,7 @@ interface BirthInfoRequest {
 
 // Get birth info for current user
 router.get("/birth-info", authenticateUser, async (req: any, res: any) => {
+  console.log("Birth info route hit");
   try {
     // Find the person record for this user
     const userPerson = await db
@@ -26,10 +27,12 @@ router.get("/birth-info", authenticateUser, async (req: any, res: any) => {
       .limit(1);
 
     if (!userPerson || userPerson.length === 0) {
+      console.log("User profile not found");
       return res.status(404).json({ message: "User profile not found" });
     }
 
     if (!userPerson[0].birthInfoId) {
+      console.log("Birth info not found");
       return res.status(404).json({ message: "Birth info not found" });
     }
 
@@ -41,6 +44,7 @@ router.get("/birth-info", authenticateUser, async (req: any, res: any) => {
       .limit(1);
 
     if (!birthInfoData || birthInfoData.length === 0) {
+      console.log("Birth info not found");
       return res.status(404).json({ message: "Birth info not found" });
     }
 
@@ -63,8 +67,10 @@ router.get("/birth-info", authenticateUser, async (req: any, res: any) => {
 
 // Create or update birth info
 router.post("/birth-info", authenticateUser, async (req: any, res: any) => {
+  console.log("Birth info post route hit");
   try {
     const { dateOfBirth, timeOfBirth, placeOfBirth } = req.body;
+    console.log("reqbody:", req.body);
 
     // Validate input
     if (!dateOfBirth || !timeOfBirth || !placeOfBirth) {

@@ -1,6 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext";
-import { TouchableOpacity, Text, StyleSheet } from "react-native";
+import { TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
+import { ThemedText } from "./ThemedText";
 
 export function SignOutButton() {
   const { signOut } = useAuth();
@@ -17,7 +18,7 @@ export function SignOutButton() {
 
   return (
     <TouchableOpacity onPress={handleSignOut} style={styles.button}>
-      <Text style={styles.text}>Sign Out</Text>
+      <ThemedText style={styles.text}>Sign Out</ThemedText>
     </TouchableOpacity>
   );
 }
@@ -27,8 +28,6 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   text: {
-    color: "#fff",
-
     fontSize: 14,
   },
 });

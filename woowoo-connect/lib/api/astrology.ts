@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { apiClient } from "./client";
+import { API_CONFIG } from "./config";
 
 export const getDailyDashboard = async () => {
   try {
@@ -7,7 +8,7 @@ export const getDailyDashboard = async () => {
     if (error) throw error;
 
     const response = await apiClient.authenticatedFetch(
-      `${process.env.EXPO_PUBLIC_API_URL}/api/daily-dashboard`,
+      `${API_CONFIG.baseURL}/api/daily-dashboard`,
       data.session?.access_token || ""
     );
 

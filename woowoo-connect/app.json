@@ -9,8 +9,12 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
+      "buildNumber": "6",
       "supportsTablet": true,
-      "bundleIdentifier": "com.adon94.woowooconnect"
+      "bundleIdentifier": "com.adon94.woowooconnect",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {

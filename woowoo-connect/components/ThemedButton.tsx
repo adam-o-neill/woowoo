@@ -131,7 +131,7 @@ export function ThemedButton({
               style={styles.icon}
             />
           )}
-          <Text style={[styles.text, { color: textColor }]}>{title}</Text>
+          <Text style={[styles.text, textStyle]}>{title}</Text>
         </View>
       )}
     </TouchableOpacity>

@@ -9,15 +9,22 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import FriendsScreen from "./friends";
-import { BirthInfoInputs } from "@/components/BirthInfoInputs";
+import { BirthInfoForm } from "@/components/BirthInfoInputs";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "expo-router";
 
 const HomeScreen = () => {
-  const { birthInfo, chartData, loading, error, updateBirthInfo } =
-    useBirthChart();
+  const { birthInfo, chartData } = useBirthChart();
   const { colors, spacing } = useTheme();
+  const { verifyOtp, hasCompletedProfile, isLoading } = useAuth();
+  const router = useRouter();
 
-  if (!birthInfo || !chartData) {
-    return <BirthInfoInputs onSubmit={updateBirthInfo} loading={loading} />;
+  if (!hasCompletedProfile) {
+    router.replace("/birth-info");
+  }
+
+  if (isLoading) {
+    return <ThemedText>Loading...</ThemedText>;
   }
 
   return (
@@ -33,7 +40,7 @@ const HomeScreen = () => {
       </ThemedText>
 
       {!birthInfo || !chartData ? (
-        <BirthInfoInputs onSubmit={updateBirthInfo} loading={loading} />
+        <ThemedText>Loading...</ThemedText>
       ) : (
         <>
           <View style={{ marginTop: spacing["2xl"] }}>

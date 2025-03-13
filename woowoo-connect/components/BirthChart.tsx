@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import { formatInTimeZone } from "date-fns-tz";
 import { Section } from "./Section";
 import { useBirthChart } from "@/hooks/useBirthChart";
-import { BirthInfoInputs } from "./BirthInfoInputs";
+import { BirthInfoForm } from "./BirthInfoInputs";
 import { useTheme } from "@/contexts/ThemeContext";
 import { ThemedText } from "./ThemedText";
 import { ThemedView } from "./ThemedView";
@@ -91,7 +91,7 @@ export function BirthChart() {
 
   // Use the new BirthInfoInputs component
   if (!birthInfo || !chartData) {
-    return <BirthInfoInputs onSubmit={updateBirthInfo} loading={loading} />;
+    return <BirthInfoForm onSubmit={updateBirthInfo} loading={loading} />;
   }
 
   // Format the timestamp in UTC

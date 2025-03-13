@@ -8,10 +8,7 @@ import {
 } from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemedButton } from "@/components/ThemedButton";
-import CountryPicker, {
-  CountryCode,
-  Country,
-} from "react-native-country-picker-modal";
+import CountryPicker, { CountryCode } from "react-native-country-picker-modal";
 import { useRouter } from "expo-router";
 
 interface AuthError {
@@ -42,9 +39,17 @@ const AuthScreen = () => {
   const [error, setError] = useState<AuthError | null>(null);
   const [countryCode, setCountryCode] = useState("US");
   const [callingCode, setCallingCode] = useState("1");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAuth = async () => {
+    if (!phone.trim()) {
+      setError({ message: "Please enter a phone number", status: 400 });
+      return;
+    }
+
     try {
+      setIsSubmitting(true);
+      setError(null);
       const fullPhoneNumber = `+${callingCode}${phone}`;
       if (isLogin) {
         await signIn(fullPhoneNumber);
@@ -54,6 +59,8 @@ const AuthScreen = () => {
       router.push("/(auth)/verify");
     } catch (error: any) {
       setError({ message: error.message, status: error.status || 500 });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -89,10 +96,13 @@ const AuthScreen = () => {
       <ThemedButton
         onPress={handleAuth}
         title={isLogin ? "Send Code" : "Register"}
+        loading={isSubmitting}
+        disabled={isSubmitting}
       />
       <TouchableOpacity
         style={styles.switchButton}
         onPress={() => setIsLogin(!isLogin)}
+        disabled={isSubmitting}
       >
         <Text style={styles.switchText}>
           {isLogin ? "Need an account? Sign up" : "Have an account? Sign in"}
@@ -118,7 +128,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     marginBottom: 12,
-    padding: 52,
+    paddingHorizontal: 52,
   },
   callingCode: {
     fontSize: 16,
@@ -128,7 +138,7 @@ const styles = StyleSheet.create({
   input: {
     height: 40,
     width: "100%",
-    borderColor: "#333",
+    borderColor: "#ccc",
     borderWidth: 1,
     paddingHorizontal: 8,
     borderRadius: 4,
