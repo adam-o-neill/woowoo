@@ -57,6 +57,7 @@ class APIClient {
         headers: {
           ...options.headers,
           Authorization: `Bearer ${accessToken}`,
+          "x-api-key": this.apiKey,
         },
         signal: controller.signal,
       });

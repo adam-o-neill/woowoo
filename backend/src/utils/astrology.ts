@@ -333,9 +333,11 @@ const getAstrologicalEvents = (planetData: PlanetPosition[], date: string) => {
     significantDegrees.forEach((degree) => {
       if (Math.abs(degreeInSign - degree) < 1) {
         events.push({
+          type: "planetary_position",
           planet: planet.name,
           description: `${planet.name} at ${degree}° of ${planet.zodiacSign}`,
           date: date,
+          significance: `${planet.name} at a critical degree, indicating potential for significant developments`,
         });
       }
     });
@@ -674,6 +676,476 @@ function getCompatibilityDescription(score: number) {
   }
 }
 
+// Add these new functions to detect current astrological events
+const getCurrentAstrologicalEvents = async (date = new Date()) => {
+  try {
+    const events = [];
+
+    // Check for retrograde planets
+    const retrogradeStatus = await getRetrogradeStatus(date);
+    events.push(...retrogradeStatus);
+
+    // Check for eclipses
+    const eclipseInfo = await checkForEclipse(date);
+    if (eclipseInfo) {
+      events.push(eclipseInfo);
+    }
+
+    // Check for full/new moons
+    const moonPhaseInfo = await calculateMoonPhase(date);
+    if (
+      moonPhaseInfo.name === "Full Moon" ||
+      moonPhaseInfo.name === "New Moon"
+    ) {
+      events.push({
+        type: "lunation",
+        name: moonPhaseInfo.name,
+        description: `${
+          moonPhaseInfo.name
+        } at ${moonPhaseInfo.percentage.toFixed(1)}% illumination`,
+        date: date.toISOString(),
+        significance:
+          moonPhaseInfo.name === "Full Moon"
+            ? "Full Moons bring culminations, revelations, and emotional peaks"
+            : "New Moons represent fresh starts, new beginnings, and setting intentions",
+      });
+    }
+
+    return events;
+  } catch (error) {
+    console.error("Error getting current astrological events:", error);
+    throw error;
+  }
+};
+
+// Check which planets are retrograde
+const getRetrogradeStatus = async (date = new Date()) => {
+  try {
+    const retrogradeEvents = [];
+
+    // We only check traditional planets that can go retrograde
+    const retrogradeCheckPlanets = planets.filter((p) =>
+      [
+        "Mercury",
+        "Venus",
+        "Mars",
+        "Jupiter",
+        "Saturn",
+        "Uranus",
+        "Neptune",
+        "Pluto",
+      ].includes(p.name)
+    );
+
+    for (const planet of retrogradeCheckPlanets) {
+      const position = await calculatePlanetPosition(
+        date,
+        planet.id,
+        planet.name
+      );
+
+      // Negative longitudeSpeed means retrograde motion
+      if (position.longitudeSpeed < 0) {
+        retrogradeEvents.push({
+          type: "retrograde",
+          planet: planet.name,
+          description: `${planet.name} Retrograde in ${position.zodiacSign}`,
+          date: date.toISOString(),
+          significance: getRetrogradeSignificance(planet.name),
+        });
+      }
+    }
+
+    return retrogradeEvents;
+  } catch (error) {
+    console.error("Error checking retrograde status:", error);
+    throw error;
+  }
+};
+
+// Get significance of each planet's retrograde
+const getRetrogradeSignificance = (planetName: string) => {
+  const significances = {
+    Mercury:
+      "Communication issues, technology glitches, travel delays, and misunderstandings",
+    Venus: "Reassessment of relationships, values, and financial matters",
+    Mars: "Frustration, redirected energy, and review of actions and motivations",
+    Jupiter: "Reassessment of beliefs, education, and expansion plans",
+    Saturn: "Review of responsibilities, structures, and long-term goals",
+    Uranus: "Internal revolution, unexpected changes to plans",
+    Neptune: "Heightened intuition, confusion, and spiritual reassessment",
+    Pluto: "Deep internal transformation and power dynamics review",
+  };
+
+  return (
+    significances[planetName as keyof typeof significances] ||
+    "Period of reflection and reassessment"
+  );
+};
+
+// Check if there's an eclipse happening
+const checkForEclipse = async (date = new Date()) => {
+  try {
+    const jd = getJulianDate(date);
+
+    // Get positions of Sun and Moon
+    const sunPos = sweph.calc_ut(
+      jd,
+      sweph.constants.SE_SUN,
+      sweph.constants.SEFLG_SWIEPH
+    );
+    const moonPos = sweph.calc_ut(
+      jd,
+      sweph.constants.SE_MOON,
+      sweph.constants.SEFLG_SWIEPH
+    );
+
+    if (sunPos.error || moonPos.error) {
+      throw new Error("Error calculating Sun or Moon positions");
+    }
+
+    // Calculate angular distance between Sun and Moon
+    let angularDistance = Math.abs(sunPos.data[0] - moonPos.data[0]);
+    if (angularDistance > 180) angularDistance = 360 - angularDistance;
+
+    // Check for lunar nodes position
+    const nodePos = sweph.calc_ut(
+      jd,
+      sweph.constants.SE_TRUE_NODE,
+      sweph.constants.SEFLG_SWIEPH
+    );
+
+    if (nodePos.error) {
+      throw new Error("Error calculating lunar node position");
+    }
+
+    // Check if Sun and Moon are close to the nodes (within 12 degrees)
+    const sunNodeDistance = Math.abs(sunPos.data[0] - nodePos.data[0]) % 180;
+    const moonNodeDistance = Math.abs(moonPos.data[0] - nodePos.data[0]) % 180;
+
+    // Simplified eclipse detection
+    // For a more accurate implementation, you would need to use specialized eclipse calculations
+    if (
+      angularDistance < 3 &&
+      (sunNodeDistance < 12 || Math.abs(sunNodeDistance - 180) < 12)
+    ) {
+      // Solar eclipse (New Moon near node)
+      return {
+        type: "eclipse",
+        name: "Solar Eclipse",
+        description: "Solar Eclipse - New beginnings with long-lasting impact",
+        date: date.toISOString(),
+        significance:
+          "Solar eclipses represent powerful new beginnings, endings, and significant shifts in external circumstances",
+      };
+    } else if (
+      Math.abs(angularDistance - 180) < 3 &&
+      (moonNodeDistance < 12 || Math.abs(moonNodeDistance - 180) < 12)
+    ) {
+      // Lunar eclipse (Full Moon near node)
+      return {
+        type: "eclipse",
+        name: "Lunar Eclipse",
+        description: "Lunar Eclipse - Emotional culminations and revelations",
+        date: date.toISOString(),
+        significance:
+          "Lunar eclipses bring emotional revelations, culminations, and significant shifts in internal awareness",
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Error checking for eclipse:", error);
+    return null;
+  }
+};
+
+// Function to get astrological events for a specific date
+const getAstrologicalEventsForDate = async (targetDate: Date) => {
+  try {
+    // Get current events for the specified date
+    const events = await getCurrentAstrologicalEvents(targetDate);
+
+    // Get planetary positions for that date
+    const planetPositions = await Promise.all(
+      planets.map((planet) =>
+        calculatePlanetPosition(targetDate, planet.id, planet.name)
+      )
+    );
+
+    // Find significant planetary positions (planets at 0°, 29°, etc.)
+    const significantPositions = planetPositions
+      .filter((planet) => {
+        const degreeInSign = planet.longitude % 30;
+        return degreeInSign < 1 || degreeInSign > 29; // Beginning or end of sign
+      })
+      .map((planet) => ({
+        type: "ingress",
+        planet: planet.name,
+        description: `${planet.name} ${
+          planet.longitude % 30 < 1 ? "entering" : "leaving"
+        } ${planet.zodiacSign}`,
+        date: targetDate.toISOString(),
+        significance: `Shift in ${getSignificanceByPlanet(planet.name)} energy`,
+      }));
+
+    // Add significant positions to events
+    events.push(...significantPositions);
+
+    return events;
+  } catch (error) {
+    console.error(
+      `Error getting astrological events for ${targetDate}:`,
+      error
+    );
+    throw error;
+  }
+};
+
+// Get significance of each planet
+const getSignificanceByPlanet = (planetName: string) => {
+  const significances = {
+    Sun: "identity, vitality, and purpose",
+    Moon: "emotions, instincts, and habits",
+    Mercury: "communication, thinking, and information processing",
+    Venus: "relationships, values, and aesthetics",
+    Mars: "action, desire, and assertiveness",
+    Jupiter: "growth, expansion, and opportunity",
+    Saturn: "structure, responsibility, and limitation",
+    Uranus: "innovation, rebellion, and sudden change",
+    Neptune: "spirituality, dreams, and dissolution",
+    Pluto: "transformation, power, and regeneration",
+  };
+
+  return significances[planetName as keyof typeof significances] || "planetary";
+};
+
+// Function to get favorable dates for specific activities based on astrological factors
+const getFavorableDatesForActivity = async (
+  activity: string,
+  startDate: Date,
+  endDate: Date,
+  limit: number = 3
+) => {
+  try {
+    // Define a map of activities to favorable astrological conditions
+    const activityConditions: {
+      [key: string]: {
+        favorablePlanets: string[];
+        favorableSigns: string[];
+        unfavorablePlanets: string[];
+        avoidRetrograde: string[];
+      };
+    } = {
+      dating: {
+        favorablePlanets: ["Venus", "Jupiter"],
+        favorableSigns: ["Libra", "Taurus", "Leo", "Sagittarius"],
+        unfavorablePlanets: ["Saturn"],
+        avoidRetrograde: ["Venus", "Mercury"],
+      },
+      "job hunting": {
+        favorablePlanets: ["Jupiter", "Sun", "Mars"],
+        favorableSigns: ["Capricorn", "Leo", "Aries", "Taurus"],
+        unfavorablePlanets: [],
+        avoidRetrograde: ["Mercury", "Jupiter"],
+      },
+      travel: {
+        favorablePlanets: ["Jupiter", "Mercury"],
+        favorableSigns: ["Sagittarius", "Gemini", "Aquarius"],
+        unfavorablePlanets: ["Saturn"],
+        avoidRetrograde: ["Mercury"],
+      },
+      "important conversation": {
+        favorablePlanets: ["Mercury", "Jupiter"],
+        favorableSigns: ["Gemini", "Libra", "Aquarius"],
+        unfavorablePlanets: [],
+        avoidRetrograde: ["Mercury"],
+      },
+      "financial decision": {
+        favorablePlanets: ["Jupiter", "Venus"],
+        favorableSigns: ["Taurus", "Capricorn", "Virgo"],
+        unfavorablePlanets: ["Neptune"],
+        avoidRetrograde: ["Mercury", "Venus"],
+      },
+    };
+
+    // Default to general favorable conditions if activity not found
+    const conditions = activityConditions[activity.toLowerCase()] || {
+      favorablePlanets: ["Jupiter", "Venus"],
+      favorableSigns: ["Libra", "Taurus", "Leo", "Sagittarius"],
+      unfavorablePlanets: ["Saturn"],
+      avoidRetrograde: ["Mercury"],
+    };
+
+    const favorableDates = [];
+    const currentDate = new Date(startDate);
+    const maxDays = Math.min(
+      90,
+      Math.ceil(
+        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+      )
+    );
+
+    // Check each day in the range
+    for (let i = 0; i < maxDays && favorableDates.length < limit; i++) {
+      const checkDate = new Date(currentDate);
+      checkDate.setDate(checkDate.getDate() + i);
+
+      // Get planetary positions for this date
+      const planetPositions = await Promise.all(
+        planets.map((planet) =>
+          calculatePlanetPosition(checkDate, planet.id, planet.name)
+        )
+      );
+
+      // Get retrograde planets
+      const retrogradeStatus = await getRetrogradeStatus(checkDate);
+      const retrogradeNames = retrogradeStatus.map((r) => r.planet);
+
+      // Check if any avoid-retrograde planets are retrograde
+      const hasUnfavorableRetrograde = conditions.avoidRetrograde.some(
+        (planet) => retrogradeNames.includes(planet)
+      );
+
+      if (hasUnfavorableRetrograde) {
+        continue; // Skip this date
+      }
+
+      // Calculate a score for this date
+      let score = 0;
+
+      // Check favorable planets in favorable signs
+      for (const planet of planetPositions) {
+        if (conditions.favorablePlanets.includes(planet.name)) {
+          score += 1;
+          if (conditions.favorableSigns.includes(planet.zodiacSign)) {
+            score += 0.5;
+          }
+        }
+
+        if (conditions.unfavorablePlanets.includes(planet.name)) {
+          score -= 0.5;
+        }
+      }
+
+      // Check moon phase (generally full moon is good for culmination, new moon for beginnings)
+      const moonPhase = await calculateMoonPhase(checkDate);
+      if (
+        (activity.toLowerCase().includes("start") &&
+          moonPhase.name === "New Moon") ||
+        (activity.toLowerCase().includes("finish") &&
+          moonPhase.name === "Full Moon")
+      ) {
+        score += 1;
+      }
+
+      // If score is positive, consider it favorable
+      if (score > 0) {
+        favorableDates.push({
+          date: checkDate.toISOString(),
+          score,
+          moonPhase: moonPhase.name,
+          favorablePlanets: planetPositions
+            .filter((p) => conditions.favorablePlanets.includes(p.name))
+            .map((p) => `${p.name} in ${p.zodiacSign}`),
+        });
+      }
+    }
+
+    // Sort by score (highest first)
+    return favorableDates.sort((a, b) => b.score - a.score);
+  } catch (error) {
+    console.error(`Error finding favorable dates for ${activity}:`, error);
+    throw error;
+  }
+};
+
+// Function to parse date-related queries from natural language
+const parseDateQuery = (
+  query: string
+): {
+  targetDate: Date | null;
+  dateRange: { start: Date; end: Date } | null;
+  isDateQuery: boolean;
+  activityQuery: string | null;
+} => {
+  const result = {
+    targetDate: null as Date | null,
+    dateRange: null as { start: Date; end: Date } | null,
+    isDateQuery: false,
+    activityQuery: null as string | null,
+  };
+
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const nextWeek = new Date(now);
+  nextWeek.setDate(nextWeek.getDate() + 7);
+
+  const nextMonth = new Date(now);
+  nextMonth.setMonth(nextMonth.getMonth() + 1);
+
+  // Check for specific date queries
+  if (query.match(/\b(today|tonight)\b/i)) {
+    result.targetDate = now;
+    result.isDateQuery = true;
+  } else if (query.match(/\b(tomorrow|next day)\b/i)) {
+    result.targetDate = tomorrow;
+    result.isDateQuery = true;
+  } else if (query.match(/\bnext week\b/i)) {
+    result.targetDate = nextWeek;
+    result.isDateQuery = true;
+  } else if (query.match(/\bnext month\b/i)) {
+    result.targetDate = nextMonth;
+    result.isDateQuery = true;
+  }
+
+  // Check for date range queries
+  if (query.match(/\b(this|coming|next) (week|month)\b/i)) {
+    const isWeek = query.match(/\bweek\b/i);
+    const start = new Date(now);
+    const end = new Date(now);
+
+    if (isWeek) {
+      end.setDate(end.getDate() + 7);
+    } else {
+      end.setMonth(end.getMonth() + 1);
+    }
+
+    result.dateRange = { start, end };
+    result.isDateQuery = true;
+  }
+
+  // Check for activity queries
+  const activityPatterns = [
+    /when should I (start|begin) (.*?)(?:\?|$)/i,
+    /when (is|would be) a good time to (.*?)(?:\?|$)/i,
+    /best time for (.*?)(?:\?|$)/i,
+    /favorable days? for (.*?)(?:\?|$)/i,
+  ];
+
+  for (const pattern of activityPatterns) {
+    const match = query.match(pattern);
+    if (match) {
+      result.isDateQuery = true;
+      result.activityQuery = match[match.length - 1].trim();
+
+      // If no date range was specified, default to next 30 days
+      if (!result.dateRange) {
+        const start = new Date(now);
+        const end = new Date(now);
+        end.setDate(end.getDate() + 30);
+        result.dateRange = { start, end };
+      }
+
+      break;
+    }
+  }
+
+  return result;
+};
+
 export {
   planets,
   calculateCurrentTransits,
@@ -686,4 +1158,10 @@ export {
   getMoonPhase,
   getAstrologicalEvents,
   calculateBirthChart,
+  getCurrentAstrologicalEvents,
+  getRetrogradeStatus,
+  checkForEclipse,
+  getAstrologicalEventsForDate,
+  getFavorableDatesForActivity,
+  parseDateQuery,
 };

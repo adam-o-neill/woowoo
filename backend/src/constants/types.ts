@@ -21,10 +21,16 @@ type Transits = {
   moonPhase: any;
 };
 
+// Completely redefine AstrologicalEvent to support all event types
 type AstrologicalEvent = {
-  planet: string;
   description: string;
   date: string;
+  significance?: string;
+  type?: string;
+  planet?: string;
+  name?: string;
+  activity?: string;
+  dates?: any[];
 };
 
 export { Planet, PlanetPosition, NatalChart, Transits, AstrologicalEvent };

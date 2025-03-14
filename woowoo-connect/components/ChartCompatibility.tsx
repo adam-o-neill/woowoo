@@ -123,7 +123,6 @@ export function ChartCompatibility({
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
     borderRadius: 12,
     marginVertical: 16,
   },

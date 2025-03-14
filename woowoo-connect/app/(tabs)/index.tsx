@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
+import { View, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
 import { format } from "date-fns";
 import { DailyDashboard } from "@/components/DailyDashboard";
 import { BirthChart } from "@/components/BirthChart";
@@ -24,7 +24,16 @@ const HomeScreen = () => {
   }
 
   if (isLoading) {
-    return <ThemedText>Loading...</ThemedText>;
+    return (
+      <ThemedView
+        style={[
+          styles.container,
+          { justifyContent: "center", alignItems: "center" },
+        ]}
+      >
+        <ActivityIndicator size="large" color={colors.primary} />
+      </ThemedView>
+    );
   }
 
   return (
@@ -43,11 +52,11 @@ const HomeScreen = () => {
         <ThemedText>Loading...</ThemedText>
       ) : (
         <>
-          <View style={{ marginTop: spacing["2xl"] }}>
+          <View style={{ marginTop: spacing["4xl"] }}>
             <DailyDashboard />
           </View>
 
-          <View style={{ marginTop: spacing["4xl"] }}>
+          <View style={{ marginTop: spacing["5xl"] }}>
             <FriendsScreen />
           </View>
         </>

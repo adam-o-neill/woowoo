@@ -88,9 +88,9 @@ export default function FriendsScreen() {
   return (
     <ThemedView style={styles.container}>
       <View style={styles.header}>
-        <ThemedText variant="headingMedium">Your Friends</ThemedText>
+        <ThemedText variant="headingMedium">Your Connections</ThemedText>
         <ThemedButton
-          title="Add Friend"
+          title="Add Connection"
           variant="primary"
           size="small"
           onPress={() => router.push("/add-friend")}
@@ -104,10 +104,10 @@ export default function FriendsScreen() {
       ) : friends.length === 0 ? (
         <View style={styles.emptyContainer}>
           <ThemedText variant="bodyMedium" style={styles.emptyText}>
-            You haven't added any friends yet.
+            You haven't added any connections yet.
           </ThemedText>
           <ThemedButton
-            title="Add Your First Friend"
+            title="Add Your First Connection"
             onPress={() => router.push("/add-friend")}
           />
         </View>

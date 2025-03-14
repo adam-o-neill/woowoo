@@ -3,7 +3,13 @@ import { authenticateUser } from "../auth/supabase";
 import { db } from "../db";
 import { person, birthChart, birthInfo, relationship } from "../db/schema";
 import { eq, and } from "drizzle-orm";
-import { calculateCurrentTransits } from "../utils/astrology";
+import {
+  calculateCurrentTransits,
+  getCurrentAstrologicalEvents,
+  getAstrologicalEventsForDate,
+  getFavorableDatesForActivity,
+  parseDateQuery,
+} from "../utils/astrology";
 import OpenAI from "openai";
 
 const router = express.Router();
@@ -21,6 +27,9 @@ router.post("/chat", authenticateUser, async (req: any, res: any) => {
     }
 
     console.log(`Chat request received: "${message.substring(0, 50)}..."`);
+
+    // Parse date-related queries
+    const dateQueryInfo = parseDateQuery(message);
 
     // Get the user's birth chart data
     const userPerson = await db
@@ -107,6 +116,37 @@ router.post("/chat", authenticateUser, async (req: any, res: any) => {
       }
     }
 
+    // Get current astrological events for today by default
+    let currentEvents = await getCurrentAstrologicalEvents(new Date());
+
+    // If the user is asking about a specific date, get events for that date
+    if (dateQueryInfo.isDateQuery) {
+      if (dateQueryInfo.targetDate) {
+        // Get events for a specific date
+        currentEvents = await getAstrologicalEventsForDate(
+          dateQueryInfo.targetDate
+        );
+      } else if (dateQueryInfo.activityQuery && dateQueryInfo.dateRange) {
+        // Get favorable dates for an activity
+        const favorableDates = await getFavorableDatesForActivity(
+          dateQueryInfo.activityQuery,
+          dateQueryInfo.dateRange.start,
+          dateQueryInfo.dateRange.end
+        );
+
+        // Add this to the current events to be included in the prompt
+
+        currentEvents.push({
+          type: "favorable_dates",
+          // @ts-ignore
+          activity: dateQueryInfo.activityQuery,
+          dates: favorableDates,
+          description: `Favorable dates for ${dateQueryInfo.activityQuery}`,
+          significance: "Based on planetary alignments and moon phases",
+        });
+      }
+    }
+
     // First, analyze the user's question to determine response style
     const analysisResponse = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -117,8 +157,11 @@ router.post("/chat", authenticateUser, async (req: any, res: any) => {
 1. Tone (professional, serious, educational, casual, mystical)
 2. Complexity level (simple, moderate, detailed)
 3. Response length (brief, moderate, comprehensive)
-4. Focus area (natal chart, compatibility, prediction, general astrology, personal advice)
+4. Focus area (natal chart, compatibility, prediction, general astrology, personal advice, date-specific)
 5. Emotional state (curious, anxious, excited, skeptical, neutral)
+6. Is the user asking about current astrological events or influences? (yes/no)
+7. Is the user asking about a specific date or time period? (yes/no)
+8. Is the user asking for favorable dates for an activity? (yes/no)
 
 When in doubt, prefer professional and serious tones. Prioritize accuracy and clarity over mystical language.
 Return your analysis as a JSON object with these fields.`,
@@ -143,7 +186,9 @@ Return your analysis as a JSON object with these fields.`,
       userChartData,
       friendData,
       friendChartData,
-      relationshipType
+      relationshipType,
+      currentEvents,
+      dateQueryInfo
     );
 
     const chatResponse = await openai.chat.completions.create({
@@ -157,7 +202,7 @@ Return your analysis as a JSON object with these fields.`,
     });
 
     const response = chatResponse.choices[0].message.content;
-
+    console.log("Chat response:", response);
     res.json({ response });
   } catch (error) {
     console.error("Error in chat endpoint:", error);
@@ -171,16 +216,24 @@ function generateSystemPrompt(
   userChartData: any,
   friendData: any,
   friendChartData: any,
-  relationshipType: string | null
+  relationshipType: string | null,
+  currentEvents: any[],
+  dateQueryInfo: any
 ) {
-  // Base prompt with professional astrology knowledge
+  // Base prompt with professional astrology knowledge but more flexibility
   let prompt = `You are a professional astrologer with expertise in natal charts, transits, and compatibility analysis. `;
-  prompt += `Provide accurate, evidence-based astrological interpretations without excessive mystical language. `;
-  prompt += `Focus on practical insights and clear explanations. `;
+  prompt += `While you primarily provide accurate, evidence-based astrological interpretations, you can also be creative and engaging when appropriate. `;
+  prompt += `Focus on practical insights and clear explanations, but don't be afraid to use storytelling when it helps illustrate astrological concepts. `;
 
-  // Override tone to be more professional regardless of analysis
-  prompt += `Maintain a professional, authoritative tone throughout your response. `;
-  prompt += `Be precise, factual, and avoid flowery or overly mystical language. `;
+  // Adjust tone based on analysis
+  if (analysis.tone === "casual" || analysis.tone === "mystical") {
+    prompt += `Use a ${analysis.tone} tone that's engaging and accessible. `;
+    prompt += `You can be more imaginative and use metaphors or storytelling when it enhances the user experience. `;
+  } else {
+    prompt += `Maintain a professional, authoritative tone throughout your response. `;
+    prompt += `Be precise and factual, but not overly rigid or restrictive. `;
+  }
+
   prompt += `Present astrological concepts as tools for self-understanding rather than as absolute deterministic forces. `;
 
   // Add complexity instructions based on analysis but with professional focus
@@ -218,22 +271,70 @@ function generateSystemPrompt(
 
     // If both charts are available, mention compatibility
     if (userChartData) {
-      prompt += `\n\nYou can analyze compatibility between the user and ${friendData.name} based on their charts. Focus on practical relationship dynamics rather than vague generalizations. `;
+      prompt += `\n\nYou can analyze compatibility between the user and ${friendData.name} based on their charts. `;
+      prompt += `This can include practical relationship dynamics, potential challenges, strengths, and even creative storytelling about their connection if requested. `;
     }
   }
 
-  // Professional response guidelines
-  prompt += `\n\nAdhere to these professional guidelines in your response:`;
-  prompt += `\n1. Be concise and direct - avoid unnecessary elaboration`;
-  prompt += `\n2. Use evidence-based astrological interpretations`;
-  prompt += `\n3. Acknowledge the limitations of astrological analysis`;
+  // Add date-specific information if the user is asking about a specific date
+  if (dateQueryInfo.isDateQuery) {
+    if (dateQueryInfo.targetDate) {
+      prompt += `\n\nThe user is asking about astrological events or influences for a specific date: ${
+        dateQueryInfo.targetDate.toISOString().split("T")[0]
+      }. `;
+    } else if (dateQueryInfo.dateRange) {
+      prompt += `\n\nThe user is asking about astrological events or influences for a date range: ${
+        dateQueryInfo.dateRange.start.toISOString().split("T")[0]
+      } to ${dateQueryInfo.dateRange.end.toISOString().split("T")[0]}. `;
+    }
+
+    if (dateQueryInfo.activityQuery) {
+      prompt += `\nSpecifically, they want to know about favorable dates for: ${dateQueryInfo.activityQuery}. `;
+    }
+  }
+
+  // Add current astrological events
+  if (currentEvents && currentEvents.length > 0) {
+    prompt += `\n\nAstrological events that may be relevant to the user's question: ${JSON.stringify(
+      currentEvents
+    )}. `;
+
+    // If the user is specifically asking about current events
+    if (
+      analysis.focusArea === "current events" ||
+      analysis.askingAboutCurrentEvents === true
+    ) {
+      prompt += `\nThe user appears to be asking about current astrological events. Prioritize explaining these events and their effects in your response. `;
+    }
+
+    // If there are favorable dates for an activity
+    const favorableDatesEvent = currentEvents.find(
+      (event) => event.type === "favorable_dates"
+    );
+    if (favorableDatesEvent) {
+      prompt += `\nThe user is asking about favorable dates for ${favorableDatesEvent.activity}. Provide specific date recommendations with astrological reasoning. `;
+    }
+  }
+
+  // Creative and flexible response guidelines
+  prompt += `\n\nAdhere to these guidelines in your response:`;
+  prompt += `\n1. Be responsive to the user's specific request, even if it's creative or unusual`;
+  prompt += `\n2. Use evidence-based astrological interpretations as a foundation`;
+  prompt += `\n3. Feel free to use storytelling, metaphors, or creative formats when appropriate`;
   prompt += `\n4. Present information in a structured, organized manner`;
   prompt += `\n5. Use markdown formatting for clarity and readability`;
-  prompt += `\n6. Avoid making absolute predictions about the future`;
-  prompt += `\n7. Focus on empowering the user with information rather than telling them what to do`;
+  prompt += `\n6. Avoid being overly restrictive or rigid in your responses`;
+  prompt += `\n7. Focus on empowering and engaging the user`;
+
+  // Special instructions for creative requests
+  prompt += `\n\nIf the user asks for creative content like a love story, narrative, or imaginative interpretation:`;
+  prompt += `\n1. Feel free to create this content based on the astrological data`;
+  prompt += `\n2. Use the planetary positions and aspects as inspiration for your storytelling`;
+  prompt += `\n3. Balance creativity with astrological accuracy`;
+  prompt += `\n4. Embrace the request rather than refusing it`;
 
   // Final instructions
-  prompt += `\n\nRespond to the user's question with professional astrological analysis. Use markdown formatting for better readability.`;
+  prompt += `\n\nRespond to the user's question with professional astrological analysis, creative storytelling, or whatever approach best serves their request. Use markdown formatting for better readability.`;
 
   return prompt;
 }
