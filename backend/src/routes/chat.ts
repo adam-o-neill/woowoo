@@ -9,6 +9,7 @@ import {
   getAstrologicalEventsForDate,
   getFavorableDatesForActivity,
   parseDateQuery,
+  calculateMoonPhase,
 } from "../utils/astrology";
 import OpenAI from "openai";
 
@@ -118,14 +119,62 @@ router.post("/chat", authenticateUser, async (req: any, res: any) => {
 
     // Get current astrological events for today by default
     let currentEvents = await getCurrentAstrologicalEvents(new Date());
-
+    console.log("currentEvents", currentEvents);
+    console.log("dateQueryInfo", dateQueryInfo);
     // If the user is asking about a specific date, get events for that date
     if (dateQueryInfo.isDateQuery) {
       if (dateQueryInfo.targetDate) {
-        // Get events for a specific date
+        // Get events for a specific date with more comprehensive information
         currentEvents = await getAstrologicalEventsForDate(
           dateQueryInfo.targetDate
         );
+
+        // Add moon phase information
+        const moonPhase = await calculateMoonPhase(dateQueryInfo.targetDate);
+        currentEvents.push({
+          type: "moon_phase",
+          name: moonPhase.name,
+          description: `Moon is in ${
+            moonPhase.name
+          } phase (${moonPhase.percentage.toFixed(1)}% illumination)`,
+          date: dateQueryInfo.targetDate.toISOString(),
+          significance: getMoonPhaseSignificance(moonPhase.name),
+        });
+
+        // Get current transits for that date
+        const transits = await calculateCurrentTransits(
+          dateQueryInfo.targetDate,
+          userChartData
+        );
+
+        // Add significant transit aspects
+        if (transits && transits.aspects) {
+          const significantAspects = transits.aspects
+            .filter((aspect: any) =>
+              [
+                "conjunction",
+                "opposition",
+                "square",
+                "trine",
+                "sextile",
+              ].includes(aspect.aspectType)
+            )
+            .slice(0, 5); // Limit to 5 most important aspects
+
+          significantAspects.forEach((aspect: any) => {
+            currentEvents.push({
+              type: "transit_aspect",
+              name: `${aspect.planet1} ${aspect.aspectType} ${aspect.planet2}`,
+              description: `${aspect.planet1} ${aspect.aspectType} ${aspect.planet2}`,
+              date: dateQueryInfo?.targetDate?.toISOString() || "",
+              significance: getAspectSignificance(
+                aspect.planet1,
+                aspect.aspectType,
+                aspect.planet2
+              ),
+            });
+          });
+        }
       } else if (dateQueryInfo.activityQuery && dateQueryInfo.dateRange) {
         // Get favorable dates for an activity
         const favorableDates = await getFavorableDatesForActivity(
@@ -146,6 +195,8 @@ router.post("/chat", authenticateUser, async (req: any, res: any) => {
         });
       }
     }
+
+    console.log("currentEvents", currentEvents);
 
     // First, analyze the user's question to determine response style
     const analysisResponse = await openai.chat.completions.create({
@@ -190,6 +241,8 @@ Return your analysis as a JSON object with these fields.`,
       currentEvents,
       dateQueryInfo
     );
+
+    console.log("systemPrompt", systemPrompt);
 
     const chatResponse = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -351,6 +404,41 @@ function getMaxTokensForLength(length: string): number {
     default:
       return 800; // Default to moderate
   }
+}
+
+// Helper function to get moon phase significance
+function getMoonPhaseSignificance(phaseName: string) {
+  const significances: { [key: string]: string } = {
+    "New Moon": "New beginnings, setting intentions, starting fresh projects",
+    "Waxing Crescent": "Building momentum, taking initial steps, growth",
+    "First Quarter": "Taking action, making decisions, overcoming challenges",
+    "Waxing Gibbous": "Refining, adjusting, preparing for culmination",
+    "Full Moon": "Culmination, realization, heightened emotions, clarity",
+    "Waning Gibbous": "Gratitude, sharing, distributing knowledge",
+    "Last Quarter": "Release, letting go, forgiveness, clearing space",
+    "Waning Crescent": "Surrender, rest, reflection, preparation for renewal",
+  };
+
+  return (
+    significances[phaseName] || "Lunar energy affecting emotions and intuition"
+  );
+}
+
+// Helper function to get aspect significance
+function getAspectSignificance(
+  planet1: string,
+  aspectType: string,
+  planet2: string
+) {
+  const aspectMeanings: { [key: string]: string } = {
+    conjunction: "merging energies, intensification, new cycle beginning",
+    opposition: "tension, awareness, balance, relationship dynamics",
+    square: "challenge, conflict, motivation for change, growth opportunity",
+    trine: "harmony, flow, ease, creative expression, opportunity",
+    sextile: "opportunity, ease with effort, learning, positive connection",
+  };
+
+  return `${planet1} and ${planet2} energies are in ${aspectType} (${aspectMeanings[aspectType]})`;
 }
 
 export default router;
