@@ -5,11 +5,18 @@ import {
   TextInput,
   StyleSheet,
   TouchableOpacity,
+  LogBox,
 } from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemedButton } from "@/components/ThemedButton";
 import CountryPicker, { CountryCode } from "react-native-country-picker-modal";
 import { useRouter } from "expo-router";
+
+// Add this line after your imports to ignore the specific warning
+LogBox.ignoreLogs([
+  "Warning: Flag: Support for defaultProps will be removed from function components",
+  "Support for defaultProps will be removed from function components",
+]);
 
 interface AuthError {
   message: string;

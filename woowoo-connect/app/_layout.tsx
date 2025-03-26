@@ -25,6 +25,14 @@ import {
   Lora_700Bold,
   Lora_400Regular_Italic,
 } from "@expo-google-fonts/lora";
+import * as Sentry from "@sentry/react-native";
+
+Sentry.init({
+  dsn: "https://2efdaee4c80d9d642015afadbf591013@o4509021074751488.ingest.de.sentry.io/4509021098410064",
+
+  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
+  // spotlight: __DEV__,
+});
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -117,7 +125,7 @@ const getNavigationTheme = (isDark: boolean) => {
   };
 };
 
-export default function RootLayout() {
+export default Sentry.wrap(function RootLayout() {
   // Load fonts using the Google Fonts hook
   const [fontsLoaded] = useFonts({
     Lora: Lora_400Regular,
@@ -156,4 +164,4 @@ export default function RootLayout() {
       </AuthProvider>
     </QueryClientProvider>
   );
-}
+});

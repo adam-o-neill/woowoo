@@ -31,7 +31,6 @@ export default function Layout() {
           headerTitleStyle: {},
         }}
       />
-      <Stack.Screen name="(auth)/(verify)" />
       <Tabs.Screen
         name="chat"
         options={{

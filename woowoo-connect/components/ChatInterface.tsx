@@ -16,6 +16,7 @@ import { ThemedView } from "./ThemedView";
 import { apiClient } from "@/lib/api/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useFriends } from "@/hooks/useFriends";
 
 interface ChatInterfaceProps {
   connectionId?: string;
@@ -27,6 +28,11 @@ interface Message {
   text: string;
   sender: "user" | "assistant";
   timestamp: Date;
+  mentionedFriends?: Array<{
+    id: string;
+    name: string;
+    relationshipId: string;
+  }>;
 }
 
 export function ChatInterface({
@@ -43,11 +49,16 @@ export function ChatInterface({
       timestamp: new Date(),
     },
   ]);
-  const [inputText, setInputText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [inputText, setInputText] = useState("");
+  const [showMentionList, setShowMentionList] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [cursorPosition, setCursorPosition] = useState(0);
   const { session } = useAuth();
   const { colors, spacing } = useTheme();
   const flatListRef = useRef<FlatList>(null);
+  const { friends, isLoading: friendsLoading } = useFriends();
+  const inputRef = useRef<TextInput>(null);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -58,14 +69,82 @@ export function ChatInterface({
     }
   }, [messages]);
 
+  // Handle text input changes
+  const handleTextChange = (text: string) => {
+    setInputText(text);
+
+    // Check if we should show the mention list
+    const lastAtSymbol = text.lastIndexOf("@", cursorPosition);
+    if (lastAtSymbol !== -1 && lastAtSymbol < cursorPosition) {
+      console.log("lastAtSymbol", lastAtSymbol);
+      const query = text.substring(lastAtSymbol + 1, cursorPosition).trim();
+      setMentionQuery(query);
+      setShowMentionList(true);
+    } else {
+      setShowMentionList(false);
+    }
+  };
+
+  // Handle selection of a friend from the mention list
+  const handleSelectFriend = (friend: any) => {
+    const lastAtSymbol = inputText.lastIndexOf("@", cursorPosition);
+    if (lastAtSymbol !== -1) {
+      const beforeMention = inputText.substring(0, lastAtSymbol);
+      const afterMention = inputText.substring(cursorPosition);
+      const newText = `${beforeMention}@${friend.name} ${afterMention}`;
+      setInputText(newText);
+      setShowMentionList(false);
+
+      // Focus the input and set cursor position after the mention
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 100);
+    }
+  };
+
+  // Filter friends based on mention query
+  const filteredFriends =
+    friends?.filter((friend) =>
+      friend.name.toLowerCase().includes(mentionQuery.toLowerCase())
+    ) || [];
+
+  console.log("filteredFriends", friends);
+
+  // Extract mentioned friends from message text
+  const extractMentionedFriends = (text: string) => {
+    const mentionRegex = /@([a-zA-Z0-9 ]+)/g;
+    const mentions = text.match(mentionRegex) || [];
+
+    const mentionedFriends = mentions
+      .map((mention) => {
+        const name = mention.substring(1).trim(); // Remove @ symbol
+        return friends?.find((friend) => friend.name === name);
+      })
+      .filter(Boolean) as Array<{
+      id: string;
+      name: string;
+      relationshipId: string;
+    }>;
+
+    return mentionedFriends;
+  };
+
   const sendMessage = async () => {
-    if (!inputText.trim() || loading) return;
+    if (!inputText.trim() || friendsLoading) return;
+
+    // Extract mentioned friends
+    const mentionedFriends = extractMentionedFriends(inputText.trim());
+    console.log("Mentioned friends:", mentionedFriends);
 
     const userMessage = {
       id: Date.now().toString(),
       text: inputText.trim(),
       sender: "user" as const,
       timestamp: new Date(),
+      mentionedFriends:
+        mentionedFriends.length > 0 ? mentionedFriends : undefined,
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -73,6 +152,13 @@ export function ChatInterface({
     setLoading(true);
 
     try {
+      // Prepare mentioned friends data for API
+      const mentionedFriendsData = mentionedFriends.map((friend) => ({
+        id: friend.id,
+        relationshipId: friend.relationshipId,
+        name: friend.name,
+      }));
+
       const response = await apiClient.authenticatedFetch(
         "/api/chat",
         session?.access_token || "",
@@ -84,6 +170,10 @@ export function ChatInterface({
           body: JSON.stringify({
             message: userMessage.text,
             connectionId,
+            mentionedFriends:
+              mentionedFriendsData.length > 0
+                ? mentionedFriendsData
+                : undefined,
           }),
         }
       );
@@ -129,21 +219,21 @@ export function ChatInterface({
     heading1: {
       color: colors.text,
       fontSize: 24,
-      fontWeight: "bold",
+      fontWeight: "bold" as const,
       marginTop: 10,
       marginBottom: 5,
     },
     heading2: {
       color: colors.text,
       fontSize: 20,
-      fontWeight: "bold",
+      fontWeight: "bold" as const,
       marginTop: 8,
       marginBottom: 4,
     },
     heading3: {
       color: colors.text,
       fontSize: 18,
-      fontWeight: "bold",
+      fontWeight: "bold" as const,
       marginTop: 6,
       marginBottom: 3,
     },
@@ -156,16 +246,16 @@ export function ChatInterface({
       marginVertical: 2,
     },
     strong: {
-      fontWeight: "bold",
+      fontWeight: "bold" as const,
       color: colors.text,
     },
     em: {
-      fontStyle: "italic",
+      fontStyle: "italic" as const,
       color: colors.text,
     },
     link: {
       color: colors.primary,
-      textDecorationLine: "underline",
+      textDecorationLine: "underline" as const,
     },
     blockquote: {
       borderLeftColor: colors.primary,
@@ -204,7 +294,7 @@ export function ChatInterface({
             {item.text}
           </ThemedText>
         ) : (
-          <Markdown>{item.text}</Markdown>
+          <Markdown style={markdownStyles}>{item.text}</Markdown>
         )}
       </View>
     );
@@ -226,6 +316,17 @@ export function ChatInterface({
             : "Ask about your birth chart or current transits"}
         </ThemedText>
 
+        <ThemedView style={styles.mentionHintContainer}>
+          <Ionicons
+            name="information-circle-outline"
+            size={16}
+            color={colors.text}
+          />
+          <ThemedText variant="bodySmall" style={styles.mentionHint}>
+            Tip: Use @ to mention friends (e.g., @Jane) and include their charts
+          </ThemedText>
+        </ThemedView>
+
         <FlatList
           ref={flatListRef}
           data={messages}
@@ -237,6 +338,7 @@ export function ChatInterface({
 
         <View style={styles.inputContainer}>
           <TextInput
+            ref={inputRef}
             style={[
               styles.input,
               {
@@ -246,7 +348,10 @@ export function ChatInterface({
               },
             ]}
             value={inputText}
-            onChangeText={setInputText}
+            onChangeText={handleTextChange}
+            onSelectionChange={(event) =>
+              setCursorPosition(event.nativeEvent.selection.start)
+            }
             placeholder="Type your question..."
             placeholderTextColor={colors.inputPlaceholder}
             multiline
@@ -263,6 +368,29 @@ export function ChatInterface({
             )}
           </TouchableOpacity>
         </View>
+
+        {showMentionList && filteredFriends.length > 0 && (
+          <View
+            style={[
+              styles.mentionList,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
+            <FlatList
+              data={filteredFriends}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.mentionItem}
+                  onPress={() => handleSelectFriend(item)}
+                >
+                  <ThemedText>{item.name}</ThemedText>
+                </TouchableOpacity>
+              )}
+              keyboardShouldPersistTaps="always"
+            />
+          </View>
+        )}
       </ThemedView>
     </KeyboardAvoidingView>
   );
@@ -325,5 +453,36 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginLeft: 8,
+  },
+  mentionList: {
+    position: "absolute",
+    bottom: 100,
+    left: 0,
+    right: 0,
+    maxHeight: 200,
+    borderWidth: 1,
+    borderRadius: 8,
+    marginHorizontal: 8,
+  },
+  mentionItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  mentionHintContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    marginBottom: 8,
+    borderRadius: 16,
+    backgroundColor: "rgba(0,0,0,0.05)",
+    alignSelf: "center",
+  },
+  mentionHint: {
+    marginLeft: 4,
+    fontSize: 12,
+    opacity: 0.8,
   },
 });

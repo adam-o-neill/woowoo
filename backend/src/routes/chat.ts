@@ -21,13 +21,14 @@ const openai = new OpenAI({
 // Chat endpoint
 router.post("/chat", authenticateUser, async (req: any, res: any) => {
   try {
-    const { message, connectionId } = req.body;
+    const { message, connectionId, mentionedFriends } = req.body;
 
     if (!message) {
       return res.status(400).json({ error: "Message is required" });
     }
 
     console.log(`Chat request received: "${message.substring(0, 50)}..."`);
+    console.log("Mentioned friends:", mentionedFriends);
 
     // Parse date-related queries
     const dateQueryInfo = parseDateQuery(message);
@@ -110,6 +111,58 @@ router.post("/chat", authenticateUser, async (req: any, res: any) => {
 
               if (friendChart && friendChart.length > 0) {
                 friendChartData = JSON.parse(friendChart[0].chartData);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Process mentioned friends
+    let mentionedFriendsData = [];
+    if (mentionedFriends && mentionedFriends.length > 0) {
+      for (const friend of mentionedFriends) {
+        // Get relationship info
+        const relationshipData = await db
+          .select()
+          .from(relationship)
+          .where(eq(relationship.id, friend.relationshipId))
+          .limit(1);
+
+        if (relationshipData && relationshipData.length > 0) {
+          // Get friend's person record
+          const friendPerson = await db
+            .select()
+            .from(person)
+            .where(eq(person.id, friend.id))
+            .limit(1);
+
+          if (friendPerson && friendPerson.length > 0) {
+            const friendData = friendPerson[0];
+
+            if (friendPerson[0].birthInfoId) {
+              // Get friend's birth info
+              const friendBirthInfo = await db
+                .select()
+                .from(birthInfo)
+                .where(eq(birthInfo.id, friendPerson[0].birthInfoId))
+                .limit(1);
+
+              if (friendBirthInfo && friendBirthInfo.length > 0) {
+                // Get friend's chart data
+                const friendChart = await db
+                  .select()
+                  .from(birthChart)
+                  .where(eq(birthChart.birthInfoId, friendBirthInfo[0].id))
+                  .limit(1);
+
+                if (friendChart && friendChart.length > 0) {
+                  mentionedFriendsData.push({
+                    name: friendData.name,
+                    relationshipType: relationshipData[0].type,
+                    chartData: JSON.parse(friendChart[0].chartData),
+                  });
+                }
               }
             }
           }
@@ -239,7 +292,8 @@ Return your analysis as a JSON object with these fields.`,
       friendChartData,
       relationshipType,
       currentEvents,
-      dateQueryInfo
+      dateQueryInfo,
+      mentionedFriendsData
     );
 
     console.log("systemPrompt", systemPrompt);
@@ -271,7 +325,8 @@ function generateSystemPrompt(
   friendChartData: any,
   relationshipType: string | null,
   currentEvents: any[],
-  dateQueryInfo: any
+  dateQueryInfo: any,
+  mentionedFriendsData: any[]
 ) {
   // Base prompt with professional astrology knowledge but more flexibility
   let prompt = `You are a professional astrologer with expertise in natal charts, transits, and compatibility analysis. `;
@@ -366,6 +421,27 @@ function generateSystemPrompt(
     );
     if (favorableDatesEvent) {
       prompt += `\nThe user is asking about favorable dates for ${favorableDatesEvent.activity}. Provide specific date recommendations with astrological reasoning. `;
+    }
+  }
+
+  // Add mentioned friends data if available
+  if (mentionedFriendsData && mentionedFriendsData.length > 0) {
+    prompt += `\n\nThe user has mentioned ${mentionedFriendsData.length} friends in their message: `;
+
+    mentionedFriendsData.forEach((friend, index) => {
+      prompt += `\n- ${friend.name} (${
+        friend.relationshipType
+      }): ${JSON.stringify(friend.chartData)}`;
+
+      // If user chart is available, mention compatibility
+      if (userChartData) {
+        prompt += `\nYou can analyze compatibility between the user and ${friend.name} based on their charts.`;
+      }
+    });
+
+    // If multiple friends are mentioned
+    if (mentionedFriendsData.length > 1) {
+      prompt += `\n\nThe user has mentioned multiple friends. You can analyze group dynamics or compare multiple charts as requested.`;
     }
   }
 
