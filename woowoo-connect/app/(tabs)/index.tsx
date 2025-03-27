@@ -50,11 +50,7 @@ const HomeScreen = () => {
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView style={styles.scrollView}>
         <ThemedView style={styles.content}>
-          <ThemedText
-            variant="displaySmall"
-            align="center"
-            style={{ marginTop: spacing.xl }}
-          >
+          <ThemedText variant="displaySmall" align="center">
             {format(new Date(), "EEEE, MMMM d, yyyy")}
           </ThemedText>
 
@@ -112,7 +108,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 16,
   },
   chatButton: {
     flexDirection: "row",

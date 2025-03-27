@@ -146,28 +146,35 @@ const generateDailyInsights = async (natalChart: any, currentTransits: any) => {
       temperature: 0.7,
     });
 
-    // Step 2: Transform interpretation into wisdom
+    // Step 2: Transform interpretation into wisdom with more variety and directness
     const wisdomResponse = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
           content:
-            "You are a mentor who delivers sharp, clear insights. " +
-            "Transform situations into memorable, actionable wisdom. " +
-            "Be direct and impactful - no flowery language or abstract metaphors. " +
+            "You are a blunt, no-nonsense astrologer who delivers sharp, direct insights. " +
+            "Your advice must be extremely concise - no more than 5-7 words when possible. " +
+            "Be provocative, counterintuitive, and memorable. " +
+            "Avoid all clichés about emotional turmoil and generic spiritual advice. " +
             "Examples: " +
-            "'Your fear of failure is heavier than failure itself.' " +
-            "'What you're calling patience is just fear wearing a mask.' " +
-            "'The answer you seek is in the question you avoid.'",
+            "'Don't text them.' " +
+            "'Self-righteousness won't help you today.' " +
+            "'The apology you're waiting for will never come.' " +
+            "'Your fear of rejection is costing you more than rejection would.' " +
+            "'That thing you're overthinking? It's not that deep.' " +
+            "'The answer is in your notes app and you know it.' " +
+            "'Stop rehearsing conversations that will never happen.' " +
+            "'Your intuition isn't wrong, your interpretation is.'",
         },
         {
           role: "user",
           content: `Given this situation: "${interpretationResponse.choices[0].message.content}" 
-            Create a single, sharp insight that cuts to the heart of the matter.`,
+            Create a single, sharp concise insight that cuts to the heart of the matter. Be direct, specific, and avoid generic emotional advice.`,
         },
       ],
-      temperature: 0.7, // Reduced for more focused responses
+      temperature: 1.0, // Maximum variety
+      max_tokens: 25, // Very short response
     });
 
     return {

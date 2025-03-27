@@ -114,19 +114,40 @@ export function ChatInterface({
 
   // Extract mentioned friends from message text
   const extractMentionedFriends = (text: string) => {
-    const mentionRegex = /@([a-zA-Z0-9 ]+)/g;
-    const mentions = text.match(mentionRegex) || [];
+    // More robust regex that handles mentions better
+    const mentionRegex = /@([a-zA-Z0-9]+(?:\s+[a-zA-Z0-9]+)*)/g;
+    const mentionedNames = [];
 
-    const mentionedFriends = mentions
-      .map((mention) => {
-        const name = mention.substring(1).trim(); // Remove @ symbol
-        return friends?.find((friend) => friend.name === name);
-      })
-      .filter(Boolean) as Array<{
-      id: string;
-      name: string;
-      relationshipId: string;
-    }>;
+    // Find all mentions in the text
+    let match;
+    while ((match = mentionRegex.exec(text)) !== null) {
+      const name = match[1].trim();
+      if (name) {
+        mentionedNames.push(name);
+      }
+    }
+
+    console.log("Found mentioned names:", mentionedNames);
+
+    // Find matching friends from the friends list
+    const mentionedFriends = [];
+
+    if (friends && friends.length > 0) {
+      for (const name of mentionedNames) {
+        const friend = friends.find(
+          (f) => f.name.toLowerCase() === name.toLowerCase()
+        );
+        if (friend) {
+          mentionedFriends.push(friend);
+        }
+      }
+    }
+
+    console.log(
+      "Matched friends:",
+      mentionedFriends.map((f) => f.name)
+    );
+    console.log("Full mentioned friends data:", mentionedFriends);
 
     return mentionedFriends;
   };
@@ -134,13 +155,31 @@ export function ChatInterface({
   const sendMessage = async () => {
     if (!inputText.trim() || friendsLoading) return;
 
-    // Extract mentioned friends
-    const mentionedFriends = extractMentionedFriends(inputText.trim());
-    console.log("Mentioned friends:", mentionedFriends);
+    // Direct check for all friends in the message
+    const messageText = inputText.trim();
+    const allMentionedFriends = [];
+
+    if (friends && friends.length > 0) {
+      for (const friend of friends) {
+        if (
+          messageText.toLowerCase().includes(`@${friend.name.toLowerCase()}`)
+        ) {
+          allMentionedFriends.push(friend);
+        }
+      }
+    }
+
+    console.log(
+      "Direct check - mentioned friends:",
+      allMentionedFriends.map((f) => f.name)
+    );
+
+    // Use the direct check results instead of the regex extraction
+    const mentionedFriends = allMentionedFriends;
 
     const userMessage = {
       id: Date.now().toString(),
-      text: inputText.trim(),
+      text: messageText,
       sender: "user" as const,
       timestamp: new Date(),
       mentionedFriends:
@@ -158,6 +197,8 @@ export function ChatInterface({
         relationshipId: friend.relationshipId,
         name: friend.name,
       }));
+
+      console.log("Sending mentioned friends to API:", mentionedFriendsData);
 
       const response = await apiClient.authenticatedFetch(
         "/api/chat",

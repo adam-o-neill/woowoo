@@ -22,6 +22,7 @@ const openai = new OpenAI({
 router.post("/chat", authenticateUser, async (req: any, res: any) => {
   try {
     const { message, connectionId, mentionedFriends } = req.body;
+    console.log("mentionedFriends", mentionedFriends);
 
     if (!message) {
       return res.status(400).json({ error: "Message is required" });
@@ -296,7 +297,14 @@ Return your analysis as a JSON object with these fields.`,
       mentionedFriendsData
     );
 
-    console.log("systemPrompt", systemPrompt);
+    console.log(
+      "System prompt for mentioned friends:",
+      JSON.stringify({
+        mentionedFriendsCount: mentionedFriendsData.length,
+        mentionedFriendsNames: mentionedFriendsData.map((f) => f.name),
+        promptExcerpt: systemPrompt.substring(0, 500) + "...", // Log just the beginning to avoid huge logs
+      })
+    );
 
     const chatResponse = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -426,23 +434,32 @@ function generateSystemPrompt(
 
   // Add mentioned friends data if available
   if (mentionedFriendsData && mentionedFriendsData.length > 0) {
-    prompt += `\n\nThe user has mentioned ${mentionedFriendsData.length} friends in their message: `;
+    prompt += `\n\nIMPORTANT: The user has mentioned ${mentionedFriendsData.length} friends in their message. You MUST use these friends' chart data for your analysis: `;
 
     mentionedFriendsData.forEach((friend, index) => {
       prompt += `\n- ${friend.name} (${
         friend.relationshipType
-      }): ${JSON.stringify(friend.chartData)}`;
-
-      // If user chart is available, mention compatibility
-      if (userChartData) {
-        prompt += `\nYou can analyze compatibility between the user and ${friend.name} based on their charts.`;
-      }
+      }): This friend has the following birth chart data that you MUST use for any analysis involving them: ${JSON.stringify(
+        friend.chartData
+      )}`;
     });
 
     // If multiple friends are mentioned
     if (mentionedFriendsData.length > 1) {
-      prompt += `\n\nThe user has mentioned multiple friends. You can analyze group dynamics or compare multiple charts as requested.`;
+      prompt += `\n\nCRITICAL INSTRUCTION: The user has mentioned multiple friends. You MUST analyze the compatibility between these friends using ONLY their chart data provided above, NOT the user's chart. Specifically:`;
+
+      // Generate all possible pairs of friends
+      for (let i = 0; i < mentionedFriendsData.length; i++) {
+        for (let j = i + 1; j < mentionedFriendsData.length; j++) {
+          prompt += `\n- When analyzing compatibility between ${mentionedFriendsData[i].name} and ${mentionedFriendsData[j].name}, use ONLY their respective chart data, not the user's chart.`;
+        }
+      }
+
+      prompt += `\n\nDO NOT use the user's chart data for compatibility analysis between friends unless explicitly requested. The user is asking about the compatibility between the mentioned friends, not about their own compatibility with these friends.`;
     }
+
+    // Add a clear instruction about the user's intent
+    prompt += `\n\nThe user's question involves these mentioned friends. Prioritize analyzing these friends' charts or compatibility between them rather than focusing on the user's chart.`;
   }
 
   // Creative and flexible response guidelines
